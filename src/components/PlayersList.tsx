@@ -1,3 +1,4 @@
+'use client'
 import {
   Table,
   TableBody,
@@ -6,8 +7,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { BoxScore, OnPlayerClicked } from '@/lib/types'
 
-export default function PlayersList() {
+export default function PlayersList({
+  scores,
+  onPlayerClicked,
+}: {
+  scores: BoxScore[]
+  onPlayerClicked: OnPlayerClicked
+}) {
   return (
     <Table>
       <TableHeader>
@@ -26,19 +34,25 @@ export default function PlayersList() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow>
-          <TableCell className="font-medium">Jayson Tatum</TableCell>
-          <NumberCell>43:22</NumberCell>
-          <NumberCell>23</NumberCell>
-          <NumberCell>5</NumberCell>
-          <NumberCell>8</NumberCell>
-          <NumberCell>4</NumberCell>
-          <NumberCell>5</NumberCell>
-          <NumberCell>0</NumberCell>
-          <NumberCell>40%</NumberCell>
-          <NumberCell>80%</NumberCell>
-          <NumberCell>3</NumberCell>
-        </TableRow>
+        {scores.map((score) => (
+          <TableRow
+            key={score.name}
+            onClick={() => onPlayerClicked(score)}
+            className="cursor-pointer"
+          >
+            <TableCell className="font-medium">{score.name}</TableCell>
+            <NumberCell>{score.mins}</NumberCell>
+            <NumberCell>{score.pts}</NumberCell>
+            <NumberCell>{score.threePt}</NumberCell>
+            <NumberCell>{score.reb}</NumberCell>
+            <NumberCell>{score.ast}</NumberCell>
+            <NumberCell>{score.stl}</NumberCell>
+            <NumberCell>{score.blk}</NumberCell>
+            <NumberCell>{score.fgPct}%</NumberCell>
+            <NumberCell>{score.ftPct}%</NumberCell>
+            <NumberCell>{score.to}</NumberCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   )
