@@ -7,7 +7,7 @@ import {
   type Team,
   type Game,
 } from '@/server/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, sql, gt, and } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 
 export type GameWithTeams = {
@@ -29,8 +29,19 @@ export async function getAllTodayGames(): Promise<GameWithTeams[]> {
     .from(games)
     .innerJoin(homeTeamAlias, eq(games.homeTeamId, homeTeamAlias.teamId))
     .innerJoin(awayTeamAlias, eq(games.awayTeamId, awayTeamAlias.teamId))
-    // .where(eq(games.gameDate, sql`CURRENT_DATE`))
-    .orderBy(desc(games.gameDate))
+    // .where(
+    //   eq(
+    //     sql`date(now() AT TIME ZONE 'America/Los_Angeles')`,
+    //     sql`date(game_time AT TIME ZONE 'America/Los_Angeles')`
+    //   )
+    // )
+    .where(
+      eq(
+        sql`date((CURRENT_DATE - 1) AT TIME ZONE 'America/Los_Angeles')`,
+        sql`date(game_time AT TIME ZONE 'America/Los_Angeles')`
+      )
+    )
+    .orderBy(desc(games.gameTime))
 }
 
 export type GamePlayerStat = {
@@ -55,7 +66,7 @@ export type GamePlayerStat = {
 }
 
 export async function getGamePlayerStats(
-  gameId: number
+  gameId: string
 ): Promise<GamePlayerStat[]> {
   return await db
     .select({
@@ -82,6 +93,11 @@ export async function getGamePlayerStats(
     .innerJoin(players, eq(playerStats.playerId, players.playerId))
     .innerJoin(teams, eq(playerStats.teamId, teams.teamId))
     .innerJoin(games, eq(playerStats.gameId, games.gameId))
-    .where(eq(games.gameId, gameId))
+    .where(
+      and(
+        eq(games.gameId, gameId),
+        gt(sql`EXTRACT(epoch FROM minutes_played)`, 0)
+      )
+    )
     .orderBy(desc(playerStats.minutesPlayed), desc(players.playerName))
 }

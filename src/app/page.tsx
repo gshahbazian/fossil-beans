@@ -5,6 +5,10 @@ import {
   type GameWithTeams,
 } from '@/server/db/queries'
 
+export const revalidate = 60 * 60
+
+export const dynamicParams = false
+
 export default async function Home() {
   const games = await getAllTodayGames()
 

@@ -1,18 +1,17 @@
 import {
-  serial,
   varchar,
-  date,
   integer,
   interval,
   pgTableCreator,
   primaryKey,
+  timestamp,
 } from 'drizzle-orm/pg-core'
 
 // https://orm.drizzle.team/docs/goodies#multi-project-schema
 export const createTable = pgTableCreator((name) => `fossil-beans_${name}`)
 
 export const teams = createTable('teams', {
-  teamId: serial().primaryKey().notNull(),
+  teamId: integer().primaryKey().notNull(),
   teamName: varchar({ length: 100 }).notNull().unique(),
   abbreviation: varchar({ length: 10 }).notNull().unique(),
 })
@@ -20,8 +19,8 @@ export const teams = createTable('teams', {
 export type Team = typeof teams.$inferSelect
 
 export const games = createTable('games', {
-  gameId: serial().primaryKey().notNull(),
-  gameDate: date().notNull(),
+  gameId: varchar({ length: 100 }).primaryKey().notNull(),
+  gameTime: timestamp({ withTimezone: true }).notNull(),
   homeTeamId: integer()
     .notNull()
     .references(() => teams.teamId),
@@ -35,7 +34,7 @@ export const games = createTable('games', {
 export type Game = typeof games.$inferSelect
 
 export const players = createTable('players', {
-  playerId: serial().primaryKey().notNull(),
+  playerId: integer().primaryKey().notNull(),
   playerName: varchar({ length: 100 }).notNull(),
   teamId: integer()
     .notNull()
@@ -47,7 +46,7 @@ export type Player = typeof players.$inferSelect
 export const playerStats = createTable(
   'player_stats',
   {
-    gameId: integer()
+    gameId: varchar({ length: 100 })
       .notNull()
       .references(() => games.gameId),
     playerId: integer()
@@ -56,7 +55,7 @@ export const playerStats = createTable(
     teamId: integer()
       .notNull()
       .references(() => teams.teamId),
-    minutesPlayed: interval().default('00:00:00'),
+    minutesPlayed: interval().default('PT00M00.00S'),
     points: integer(),
     rebounds: integer(),
     assists: integer(),
@@ -72,7 +71,12 @@ export const playerStats = createTable(
     fouls: integer(),
     plusMinus: integer(),
   },
-  (table) => [primaryKey({ columns: [table.gameId, table.playerId] })]
+  (table) => [
+    primaryKey({
+      name: 'player_stats_pk',
+      columns: [table.gameId, table.playerId],
+    }),
+  ]
 )
 
 export type PlayerStats = typeof playerStats.$inferSelect
