@@ -1,4 +1,4 @@
-import ClientPage from '@/app/ClientPage'
+import ClientPage from '@/components/client-page'
 import { BoxScore, Game } from '@/lib/types'
 
 const topLines: BoxScore[] = [
@@ -169,8 +169,8 @@ const game: Game = {
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] justify-items-center p-4 pb-8 gap-8 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2">
+    <div className="grid grid-rows-[20px_1fr_20px] justify-items-center gap-8 p-4 pb-8">
+      <main className="row-start-2 flex flex-col gap-8">
         <h2 className="text-3xl font-semibold">Top lines</h2>
         <ClientPage topLines={topLines} games={[game]} />
       </main>
