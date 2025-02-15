@@ -14,6 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { trimStart } from '@/lib/trim-start'
 
 export default function StatsTable({
   stats,
@@ -84,10 +85,6 @@ function PercentageValue({
   )
 }
 
-// https://youmightnotneed.com/lodash/#trimStart
-const trimStart = (str: string, c = '\\s') =>
-  str.replace(new RegExp(`^([${c}]*)(.*)$`), '$2')
-
 function StatRow({
   stat,
   onPlayerClicked,
@@ -95,11 +92,9 @@ function StatRow({
   stat: GamePlayerStat
   onPlayerClicked: (stat: GamePlayerStat) => void
 }) {
-  const trimmedHoursOffMinutes = stat.minutesPlayed
-    ? trimStart(stat.minutesPlayed, '00:')
+  const trimmedMinutes = stat.minutesPlayed
+    ? trimStart(stat.minutesPlayed, '00:').split('.')[0]
     : '00:00'
-
-  const trimmedMinutes = trimmedHoursOffMinutes.split('.')[0]
 
   return (
     <TableRow
