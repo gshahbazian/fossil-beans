@@ -7,6 +7,5 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.associations": {
     "*.css": "tailwindcss"
-  },
-  "prettier.configPath": "./prettier.config.js"
+  }
 }

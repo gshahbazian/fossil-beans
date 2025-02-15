@@ -5,6 +5,9 @@ import {
   pgTableCreator,
   primaryKey,
   timestamp,
+  uuid,
+  customType,
+  text,
 } from 'drizzle-orm/pg-core'
 
 // https://orm.drizzle.team/docs/goodies#multi-project-schema
@@ -80,3 +83,23 @@ export const playerStats = createTable(
 )
 
 export type PlayerStats = typeof playerStats.$inferSelect
+
+const bytea = customType<{
+  data: Buffer
+  default: false
+}>({
+  dataType() {
+    return 'bytea'
+  },
+})
+
+export const apiKeys = createTable('api_keys', {
+  id: uuid().defaultRandom().primaryKey(),
+  consumerName: varchar({ length: 100 }).notNull().unique(),
+  encryptedKey: bytea().notNull(),
+  iv: bytea().notNull(),
+  keyHash: text().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+})

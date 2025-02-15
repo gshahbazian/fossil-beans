@@ -1,3 +1,4 @@
+import { verifyRequest } from '@/lib/api-keys'
 import { BoxScore, fetchBoxScore } from '@/lib/nba/box-scores'
 import { fetchGames } from '@/lib/nba/games'
 import { db } from '@/server/db'
@@ -10,9 +11,14 @@ import {
 } from '@/server/db/schema'
 import { sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const isValid = await verifyRequest(request)
+  if (!isValid) {
+    return NextResponse.json({ error: 'Invalid API key' }, { status: 403 })
+  }
+
   const feb13 = new Date('2025-02-13T00:00:00-08:00')
 
   const nbaGames = await fetchGames(feb13)
