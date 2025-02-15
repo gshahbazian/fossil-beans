@@ -5,8 +5,8 @@ import {
   type GameWithTeams,
 } from '@/server/db/queries'
 
-export const revalidate = 3600
-
+// 12 hour ssr cache
+export const revalidate = 43200
 export const dynamicParams = false
 
 export default async function Home() {
