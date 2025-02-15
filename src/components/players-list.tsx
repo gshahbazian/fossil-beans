@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { BoxScore, OnPlayerClicked } from '@/lib/types'
+import { type BoxScore, type OnPlayerClicked } from '@/lib/types'
 
 export default function PlayersList({
   scores,

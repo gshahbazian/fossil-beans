@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react'
 import GameEntry from '@/components/game-entry'
 import PlayersList from '@/components/players-list'
-import { BoxScore, Game } from '@/lib/types'
+import { type BoxScore, type Game } from '@/lib/types'
 import PlayerDialog from '@/components/player-dialog'
 
 export default function ClientPage({

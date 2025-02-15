@@ -1,4 +1,5 @@
-import { BoxScore } from '@/lib/types'
+/* eslint-disable @next/next/no-img-element */
+import { type BoxScore } from '@/lib/types'
 import {
   Dialog,
   DialogContent,

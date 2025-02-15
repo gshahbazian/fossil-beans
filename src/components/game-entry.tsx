@@ -1,5 +1,5 @@
 import PlayersList from '@/components/players-list'
-import { Game, OnPlayerClicked } from '@/lib/types'
+import { type Game, type OnPlayerClicked } from '@/lib/types'
 
 export default function GameEntry({
   game,

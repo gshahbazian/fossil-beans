@@ -1,5 +1,5 @@
 import ClientPage from '@/components/client-page'
-import { BoxScore, Game } from '@/lib/types'
+import { type BoxScore, type Game } from '@/lib/types'
 
 const topLines: BoxScore[] = [
   {
