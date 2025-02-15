@@ -171,9 +171,7 @@ export default function Home() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] justify-items-center p-4 pb-8 gap-8 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2">
-        <h1 className="text-4xl font-bold text-center">fossil beans</h1>
-
-        <h2 className="text-2xl font-bold">top lines on 10/30</h2>
+        <h2 className="text-3xl font-semibold">Top lines</h2>
         <ClientPage topLines={topLines} games={[game]} />
       </main>
     </div>

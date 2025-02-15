@@ -3,7 +3,9 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: sans-serif;
+
+  background: linear-gradient(113deg, #ebdbf1 0%, #f6edf3 50.35%, #f8f5f3 100%);
 }
 
 @layer base {
