@@ -59,9 +59,5 @@ export default function PlayersList({
 }
 
 function NumberCell({ children }: { children: React.ReactNode }) {
-  return (
-    <TableCell className="text-right font-[family-name:var(--font-geist-mono)]">
-      {children}
-    </TableCell>
-  )
+  return <TableCell className="text-right font-mono">{children}</TableCell>
 }

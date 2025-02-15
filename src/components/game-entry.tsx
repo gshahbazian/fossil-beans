@@ -20,7 +20,7 @@ export default function GameEntry({
 
       <h2 className="text-2xl font-bold">
         {game.homeTeam}{' '}
-        <span className="font-[family-name:var(--font-geist-mono)] font-normal">
+        <span className="font-mono font-normal">
           {homeScore}-{visitorScore}
         </span>{' '}
         {game.visitorTeam}
