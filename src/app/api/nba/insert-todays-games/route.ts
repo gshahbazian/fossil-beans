@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 403 })
   }
 
+  // GABE: currently testing with feb 13 games
   const feb13 = new Date('2025-02-13T00:00:00-08:00')
 
   const nbaGames = await fetchGames(feb13)
@@ -60,7 +61,9 @@ export async function GET(request: NextRequest) {
 
   revalidatePath('/')
   try {
-    await fetch('https://fossil-beans.vercel.app/api/revalidate')
+    await fetch('https://fossil-beans.vercel.app/api/revalidate', {
+      headers: request.headers,
+    })
   } catch (error) {
     console.error(error)
   }

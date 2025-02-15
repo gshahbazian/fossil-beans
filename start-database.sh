@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Use this script to start a docker container for a local development database
 
-# On Linux and macOS you can run this script directly - `./start-database.sh`
-
 DB_CONTAINER_NAME="fossil-beans-postgres"
 
 if ! [ -x "$(command -v docker)" ]; then
