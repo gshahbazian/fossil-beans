@@ -1,11 +1,13 @@
-/* eslint-disable @next/next/no-img-element */
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import { type GamePlayerStat } from '@/server/db/queries'
+import Image from 'next/image'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 
 export default function PlayerDialog({
   player,
@@ -25,12 +27,17 @@ export default function PlayerDialog({
         <DialogHeader>
           <DialogTitle>{player.playerName}</DialogTitle>
         </DialogHeader>
+        <VisuallyHidden.Root>
+          <DialogDescription>Stats for {player.playerName}</DialogDescription>
+        </VisuallyHidden.Root>
 
         <div className="flex flex-col items-center">
-          <img
-            src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`}
+          <Image
+            src={`https://cdn.nba.com/headshots/nba/latest/260x190/${player.playerId}.png`}
             alt={`${player.playerName} headshot`}
             className="w-32"
+            width={260}
+            height={190}
           />
           <span>{player.points} Points</span>
           <span>{player.rebounds} Rebounds</span>

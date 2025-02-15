@@ -5,6 +5,15 @@
 import './src/env.js'
 
 /** @type {import("next").NextConfig} */
-const config = {}
+const config = {
+  images: {
+    remotePatterns: [
+      {
+        hostname: 'cdn.nba.com',
+        pathname: '/headshots/nba/latest/260x190/**',
+      },
+    ],
+  },
+}
 
 export default config
