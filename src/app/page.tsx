@@ -1,7 +1,7 @@
 import GameStats from '@/components/game-stats'
 import {
-  getAllTodayGames,
   getGamePlayerStats,
+  getGamesOnDate,
   type GameWithTeams,
 } from '@/server/db/queries'
 
@@ -10,7 +10,7 @@ export const revalidate = 43200
 export const dynamicParams = false
 
 export default async function Home() {
-  const games = await getAllTodayGames()
+  const games = await getGamesOnDate('2025-02-13')
 
   return (
     <div className="mx-auto flex w-screen max-w-4xl flex-col gap-8 py-8">

@@ -7,7 +7,7 @@ import {
   type Team,
   type Game,
 } from '@/server/db/schema'
-import { eq, desc, sql, gt, and } from 'drizzle-orm'
+import { eq, desc, sql, gt, and, asc } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 
 export type GameWithTeams = {
@@ -16,7 +16,8 @@ export type GameWithTeams = {
   awayTeam: Team
 }
 
-export async function getAllTodayGames(): Promise<GameWithTeams[]> {
+// Date string in format YYYY-MM-DD
+export async function getGamesOnDate(date: string): Promise<GameWithTeams[]> {
   const homeTeamAlias = alias(teams, 'homeTeam')
   const awayTeamAlias = alias(teams, 'awayTeam')
 
@@ -29,19 +30,13 @@ export async function getAllTodayGames(): Promise<GameWithTeams[]> {
     .from(games)
     .innerJoin(homeTeamAlias, eq(games.homeTeamId, homeTeamAlias.teamId))
     .innerJoin(awayTeamAlias, eq(games.awayTeamId, awayTeamAlias.teamId))
-    // .where(
-    //   eq(
-    //     sql`date(now() AT TIME ZONE 'America/Los_Angeles')`,
-    //     sql`date(game_time AT TIME ZONE 'America/Los_Angeles')`
-    //   )
-    // )
     .where(
       eq(
-        sql`date((CURRENT_DATE - 1) AT TIME ZONE 'America/Los_Angeles')`,
+        sql`date(${date})`,
         sql`date(game_time AT TIME ZONE 'America/Los_Angeles')`
       )
     )
-    .orderBy(desc(games.gameTime))
+    .orderBy(asc(games.gameTime))
 }
 
 export type GamePlayerStat = {
