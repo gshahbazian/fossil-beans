@@ -21,15 +21,15 @@ export default function GameStats({
 
   return (
     <>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 overflow-x-hidden">
         <hr />
 
         <h2 className="text-2xl font-bold">
-          {game.homeTeam.teamName}{' '}
+          {game.awayTeam.abbreviation}{' '}
           <span className="font-mono font-normal">
-            {game.game.homeScore}-{game.game.awayScore}
+            {game.game.awayScore}-{game.game.homeScore}
           </span>{' '}
-          {game.awayTeam.teamName}
+          {game.homeTeam.abbreviation}
         </h2>
 
         <StatsTable stats={stats} onPlayerClicked={onPlayerClicked} />

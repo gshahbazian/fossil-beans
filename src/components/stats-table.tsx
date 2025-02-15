@@ -8,6 +8,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { type GamePlayerStat } from '@/server/db/queries'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export default function StatsTable({
   stats,
@@ -35,37 +41,11 @@ export default function StatsTable({
       </TableHeader>
       <TableBody>
         {stats.map((stat) => (
-          <TableRow
-            key={stat.playerName}
-            onClick={() => onPlayerClicked(stat)}
-            className="cursor-pointer"
-          >
-            <TableCell className="font-medium">{stat.playerName}</TableCell>
-            <NumberCell>{stat.minutesPlayed}</NumberCell>
-            <NumberCell>{stat.points}</NumberCell>
-            <NumberCell>{stat.threePointersMade}</NumberCell>
-            <NumberCell>{stat.rebounds}</NumberCell>
-            <NumberCell>{stat.assists}</NumberCell>
-            <NumberCell>{stat.steals}</NumberCell>
-            <NumberCell>{stat.blocks}</NumberCell>
-            <NumberCell>
-              {stat.fieldGoalsAttempted && stat.fieldGoalsAttempted > 0 && (
-                <PercentageValue
-                  numerator={stat.fieldGoalsMade ?? 0}
-                  denominator={stat.fieldGoalsAttempted}
-                />
-              )}
-            </NumberCell>
-            <NumberCell>
-              {stat.freeThrowsAttempted && stat.freeThrowsAttempted > 0 && (
-                <PercentageValue
-                  numerator={stat.freeThrowsMade ?? 0}
-                  denominator={stat.freeThrowsAttempted}
-                />
-              )}
-            </NumberCell>
-            <NumberCell>{stat.turnovers}</NumberCell>
-          </TableRow>
+          <StatRow
+            key={stat.playerId}
+            stat={stat}
+            onPlayerClicked={onPlayerClicked}
+          />
         ))}
       </TableBody>
     </Table>
@@ -76,6 +56,11 @@ function NumberCell({ children }: { children: React.ReactNode }) {
   return <TableCell className="text-right font-mono">{children}</TableCell>
 }
 
+const decimalFormat = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+})
+
 function PercentageValue({
   numerator,
   denominator,
@@ -83,5 +68,74 @@ function PercentageValue({
   numerator: number
   denominator: number
 }) {
-  return `${((numerator / denominator) * 100).toFixed(2)}%`
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>{decimalFormat.format((numerator / denominator) * 100)}</span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <span>
+            {numerator} / {denominator}
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+// https://youmightnotneed.com/lodash/#trimStart
+const trimStart = (str: string, c = '\\s') =>
+  str.replace(new RegExp(`^([${c}]*)(.*)$`), '$2')
+
+function StatRow({
+  stat,
+  onPlayerClicked,
+}: {
+  stat: GamePlayerStat
+  onPlayerClicked: (stat: GamePlayerStat) => void
+}) {
+  const trimmedHoursOffMinutes = stat.minutesPlayed
+    ? trimStart(stat.minutesPlayed, '00:')
+    : '00:00'
+
+  const trimmedMinutes = trimmedHoursOffMinutes.split('.')[0]
+
+  return (
+    <TableRow
+      key={stat.playerName}
+      onClick={() => onPlayerClicked(stat)}
+      className="cursor-pointer"
+    >
+      <TableCell className="truncate font-medium">{stat.playerName}</TableCell>
+      <NumberCell>{trimmedMinutes}</NumberCell>
+      <NumberCell>{stat.points}</NumberCell>
+      <NumberCell>{stat.threePointersMade}</NumberCell>
+      <NumberCell>{stat.rebounds}</NumberCell>
+      <NumberCell>{stat.assists}</NumberCell>
+      <NumberCell>{stat.steals}</NumberCell>
+      <NumberCell>{stat.blocks}</NumberCell>
+      <NumberCell>
+        {stat.fieldGoalsAttempted && stat.fieldGoalsAttempted > 0 ? (
+          <PercentageValue
+            numerator={stat.fieldGoalsMade ?? 0}
+            denominator={stat.fieldGoalsAttempted}
+          />
+        ) : (
+          <span>-</span>
+        )}
+      </NumberCell>
+      <NumberCell>
+        {stat.freeThrowsAttempted && stat.freeThrowsAttempted > 0 ? (
+          <PercentageValue
+            numerator={stat.freeThrowsMade ?? 0}
+            denominator={stat.freeThrowsAttempted}
+          />
+        ) : (
+          <span>-</span>
+        )}
+      </NumberCell>
+      <NumberCell>{stat.turnovers}</NumberCell>
+    </TableRow>
+  )
 }

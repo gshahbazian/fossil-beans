@@ -13,8 +13,8 @@ export default async function Home() {
   const games = await getAllTodayGames()
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] justify-items-center gap-8 p-4 pb-8">
-      <main className="row-start-2 flex flex-col gap-8">
+    <div className="mx-auto flex w-screen max-w-4xl flex-col gap-8 py-8">
+      <main className="flex flex-col gap-8 px-4">
         <h2 className="text-3xl font-semibold">Todays Games</h2>
 
         {games.map((game) => (
