@@ -5,7 +5,7 @@ import {
   type GameWithTeams,
 } from '@/server/db/queries'
 
-export const revalidate = 60 * 60
+export const revalidate = 3600
 
 export const dynamicParams = false
 
