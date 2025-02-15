@@ -15,7 +15,9 @@ export default async function Home() {
   return (
     <div className="mx-auto flex w-screen max-w-4xl flex-col gap-8 py-8">
       <main className="flex flex-col gap-8 px-4">
-        <h2 className="text-3xl font-semibold">Todays Games</h2>
+        <h2 className="text-3xl font-semibold">
+          NBA Lines <span className="font-normal text-neutral-400">Feb 13</span>
+        </h2>
 
         {games.map((game) => (
           <GameEntry key={game.game.gameId} game={game} />
