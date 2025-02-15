@@ -1,34 +1,78 @@
-// Example model schema from the Drizzle docs
-// https://orm.drizzle.team/docs/sql-schema-declaration
-
-import { sql } from 'drizzle-orm'
 import {
-  index,
-  integer,
-  pgTableCreator,
-  timestamp,
+  serial,
   varchar,
+  date,
+  integer,
+  interval,
+  pgTableCreator,
+  primaryKey,
 } from 'drizzle-orm/pg-core'
 
-/**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
- * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- */
+// https://orm.drizzle.team/docs/goodies#multi-project-schema
 export const createTable = pgTableCreator((name) => `fossil-beans_${name}`)
 
-export const posts = createTable(
-  'post',
+export const teams = createTable('teams', {
+  teamId: serial().primaryKey().notNull(),
+  teamName: varchar({ length: 100 }).notNull().unique(),
+  abbreviation: varchar({ length: 10 }).notNull().unique(),
+})
+
+export type Team = typeof teams.$inferSelect
+
+export const games = createTable('games', {
+  gameId: serial().primaryKey().notNull(),
+  gameDate: date().notNull(),
+  homeTeamId: integer()
+    .notNull()
+    .references(() => teams.teamId),
+  awayTeamId: integer()
+    .notNull()
+    .references(() => teams.teamId),
+  homeScore: integer().default(0).notNull(),
+  awayScore: integer().default(0).notNull(),
+})
+
+export type Game = typeof games.$inferSelect
+
+export const players = createTable('players', {
+  playerId: serial().primaryKey().notNull(),
+  playerName: varchar({ length: 100 }).notNull(),
+  teamId: integer()
+    .notNull()
+    .references(() => teams.teamId),
+})
+
+export type Player = typeof players.$inferSelect
+
+export const playerStats = createTable(
+  'player_stats',
   {
-    id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-    name: varchar('name', { length: 256 }),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).$onUpdate(
-      () => new Date()
-    ),
+    gameId: integer()
+      .notNull()
+      .references(() => games.gameId),
+    playerId: integer()
+      .notNull()
+      .references(() => players.playerId),
+    teamId: integer()
+      .notNull()
+      .references(() => teams.teamId),
+    minutesPlayed: interval().default('00:00:00'),
+    points: integer(),
+    rebounds: integer(),
+    assists: integer(),
+    steals: integer(),
+    blocks: integer(),
+    fieldGoalsMade: integer(),
+    fieldGoalsAttempted: integer(),
+    threePointersMade: integer(),
+    threePointersAttempted: integer(),
+    freeThrowsMade: integer(),
+    freeThrowsAttempted: integer(),
+    turnovers: integer(),
+    fouls: integer(),
+    plusMinus: integer(),
   },
-  (example) => [index('name_idx').on(example.name)]
+  (table) => [primaryKey({ columns: [table.gameId, table.playerId] })]
 )
+
+export type PlayerStats = typeof playerStats.$inferSelect
