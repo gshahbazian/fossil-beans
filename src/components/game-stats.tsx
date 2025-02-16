@@ -37,6 +37,7 @@ export default function GameStats({
 
       {selectedPlayer && (
         <PlayerDialog
+          game={game}
           player={selectedPlayer}
           onClose={() => setSelectedPlayer(null)}
         />

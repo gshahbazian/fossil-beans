@@ -5,15 +5,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { type GamePlayerStat } from '@/server/db/queries'
+import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import Image from 'next/image'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { trimStart } from '@/lib/trim-start'
 
 export default function PlayerDialog({
   player,
+  game,
   onClose,
 }: {
+  game: GameWithTeams
   player: GamePlayerStat
   onClose: () => void
 }) {
@@ -63,6 +65,24 @@ export default function PlayerDialog({
           />
           <StatBlock label="TO" value={player.turnovers} />
           <StatBlock label="Mins" value={trimmedMinutes} />
+        </div>
+
+        <div className="flex flex-row justify-between pt-2 text-xs">
+          <span className="font-bold">
+            {game.awayTeam.abbreviation}{' '}
+            <span className="font-mono font-normal">
+              {game.game.awayScore}-{game.game.homeScore}
+            </span>{' '}
+            {game.homeTeam.abbreviation}
+          </span>
+
+          <span>
+            {game.game.gameTime.toLocaleString('en-US', {
+              day: 'numeric',
+              month: 'numeric',
+              year: '2-digit',
+            })}
+          </span>
         </div>
       </DialogContent>
     </Dialog>
