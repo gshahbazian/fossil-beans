@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Fossil Beans',
   icons: {
     icon: '/icon.png',
-    apple: '/apple-icon.png',
+    apple: '/apple-touch-icon.png',
   },
 }
 
