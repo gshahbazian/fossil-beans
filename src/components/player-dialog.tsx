@@ -99,7 +99,7 @@ function StatBlock({
   value: React.ReactNode
 }) {
   return (
-    <div className="flex w-20 flex-col items-center rounded bg-neutral-100 p-2">
+    <div className="flex w-20 flex-col items-center rounded bg-neutral-100 p-2 dark:bg-neutral-800">
       <span className="font-mono text-sm font-bold">{value}</span>
       <span className="text-xs">{label}</span>
     </div>
