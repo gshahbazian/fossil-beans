@@ -4,7 +4,6 @@ import { type Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Fossil Beans',
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
 const giest = Geist({ subsets: ['latin'] })
