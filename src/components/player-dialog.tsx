@@ -11,10 +11,12 @@ import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { trimStart } from '@/lib/trim-start'
 
 export default function PlayerDialog({
+  isOpen,
+  onClose,
   player,
   game,
-  onClose,
 }: {
+  isOpen: boolean
   game: GameWithTeams
   player: GamePlayerStat
   onClose: () => void
@@ -29,7 +31,7 @@ export default function PlayerDialog({
     : '00:00'
 
   return (
-    <Dialog defaultOpen onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{player.playerName}</DialogTitle>

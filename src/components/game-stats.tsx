@@ -12,11 +12,13 @@ export default function GameStats({
   game: GameWithTeams
   stats: GamePlayerStat[]
 }) {
+  const [isOpen, setIsOpen] = useState(false)
   const [selectedPlayer, setSelectedPlayer] = useState<GamePlayerStat | null>(
     null
   )
   const onPlayerClicked = useCallback((player: GamePlayerStat) => {
     setSelectedPlayer(player)
+    setIsOpen(true)
   }, [])
 
   return (
@@ -37,9 +39,10 @@ export default function GameStats({
 
       {selectedPlayer && (
         <PlayerDialog
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
           game={game}
           player={selectedPlayer}
-          onClose={() => setSelectedPlayer(null)}
         />
       )}
     </>
