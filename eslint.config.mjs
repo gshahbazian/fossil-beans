@@ -11,24 +11,14 @@ const compat = new FlatCompat({
 })
 
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+  ...compat.extends(
+    'next/core-web-vitals',
+    'next/typescript',
+    'plugin:drizzle/recommended'
+  ),
   {
     plugins: {
       drizzle: pluginDrizzle,
-    },
-    rules: {
-      'drizzle/enforce-delete-with-where': [
-        'error',
-        {
-          drizzleObjectName: ['db', 'ctx.db'],
-        },
-      ],
-      'drizzle/enforce-update-with-where': [
-        'error',
-        {
-          drizzleObjectName: ['db', 'ctx.db'],
-        },
-      ],
     },
   },
 ]
