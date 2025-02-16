@@ -1,4 +1,5 @@
 'use client'
+
 import {
   Table,
   TableBody,
@@ -26,8 +27,15 @@ export default function StatsTable({
   return (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
+        <TableRow className="hover:bg-transparent">
+          <TableHead className="bg-background sticky left-0 z-1">
+            <span className="invisible truncate border-r font-medium">
+              Name
+            </span>
+            <span className="absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium">
+              Name
+            </span>
+          </TableHead>
           <TableHead className="text-right">Mins</TableHead>
           <TableHead className="text-right">Pts</TableHead>
           <TableHead className="text-right">3pt</TableHead>
@@ -100,9 +108,16 @@ function StatRow({
     <TableRow
       key={stat.playerName}
       onClick={() => onPlayerClicked(stat)}
-      className="cursor-pointer"
+      className="cursor-pointer [&_td]:h-9 [&_td]:py-0"
     >
-      <TableCell className="truncate font-medium">{stat.playerName}</TableCell>
+      <TableCell className="sticky left-0 z-1 bg-neutral-50 dark:bg-neutral-900">
+        <span className="invisible truncate border-r font-medium">
+          {stat.playerName}
+        </span>
+        <span className="absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium">
+          {stat.playerName}
+        </span>
+      </TableCell>
       <NumberCell>{trimmedMinutes}</NumberCell>
       <NumberCell>{stat.points}</NumberCell>
       <NumberCell>{stat.threePointersMade}</NumberCell>

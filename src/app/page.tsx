@@ -10,6 +10,8 @@ export const revalidate = 43200
 export const dynamicParams = false
 
 export default async function Home() {
+  // GABE: in the future we should get the day of the latest
+  // game from the db as the source of current day truth
   const games = await getGamesOnDate('2025-02-13')
 
   return (
