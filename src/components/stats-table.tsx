@@ -29,7 +29,10 @@ export default function StatsTable({
       <TableHeader>
         <TableRow className="hover:bg-transparent">
           <TableHead className="bg-background sticky left-0 z-1">
-            <span className="invisible truncate border-r font-medium">
+            <span
+              className="invisible truncate border-r font-medium"
+              aria-hidden
+            >
               Name
             </span>
             <span className="absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium">
@@ -111,7 +114,7 @@ function StatRow({
       className="cursor-pointer [&_td]:h-9 [&_td]:py-0"
     >
       <TableCell className="sticky left-0 z-1 bg-neutral-50 dark:bg-neutral-900">
-        <span className="invisible truncate border-r font-medium">
+        <span className="invisible truncate border-r font-medium" aria-hidden>
           {stat.playerName}
         </span>
         <span className="absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium">
