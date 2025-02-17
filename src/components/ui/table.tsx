@@ -6,7 +6,12 @@ import { cn } from '@/lib/utils'
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (
-    <div className="relative w-full overflow-auto">
+    <div
+      className="scrollbar-hidden relative w-full overflow-auto"
+      style={{
+        scrollbarWidth: 'none',
+      }} /** Safari would not respect this coming from tw : ( */
+    >
       <table
         data-slot="table"
         className={cn('w-full caption-bottom text-sm', className)}
@@ -27,23 +32,14 @@ function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
-  return (
-    <tbody
-      data-slot="table-body"
-      className={cn('[&_tr:last-child]:border-0', className)}
-      {...props}
-    />
-  )
+  return <tbody data-slot="table-body" className={className} {...props} />
 }
 
 function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn(
-        'bg-muted/50 border-t font-medium [&>tr]:last:border-b-0',
-        className
-      )}
+      className={cn('border-t [&>tr]:last:border-b-0', className)}
       {...props}
     />
   )

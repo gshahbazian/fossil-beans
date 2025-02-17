@@ -4,6 +4,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -16,6 +17,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { trimStart } from '@/lib/trim-start'
+import { cn } from '@/lib/utils'
 
 export default function StatsTable({
   stats,
@@ -27,29 +29,7 @@ export default function StatsTable({
   return (
     <Table>
       <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="bg-background sticky left-0 z-1">
-            <span
-              className="invisible truncate border-r font-medium"
-              aria-hidden
-            >
-              Name
-            </span>
-            <span className="absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium">
-              Name
-            </span>
-          </TableHead>
-          <TableHead className="text-right">Mins</TableHead>
-          <TableHead className="text-right">Pts</TableHead>
-          <TableHead className="text-right">3pt</TableHead>
-          <TableHead className="text-right">Reb</TableHead>
-          <TableHead className="text-right">Ast</TableHead>
-          <TableHead className="text-right">Stl</TableHead>
-          <TableHead className="text-right">Blk</TableHead>
-          <TableHead className="text-right">Fg%</TableHead>
-          <TableHead className="text-right">Ft%</TableHead>
-          <TableHead className="text-right">TO</TableHead>
-        </TableRow>
+        <HeaderFooter />
       </TableHeader>
       <TableBody>
         {stats.map((stat) => (
@@ -60,7 +40,40 @@ export default function StatsTable({
           />
         ))}
       </TableBody>
+      <TableFooter>
+        <HeaderFooter hideName />
+      </TableFooter>
     </Table>
+  )
+}
+
+function HeaderFooter({ hideName = false }: { hideName?: boolean }) {
+  return (
+    <TableRow className="hover:bg-transparent">
+      <TableHead className="bg-background sticky left-0 z-1">
+        <span className="invisible truncate border-r font-medium" aria-hidden>
+          Name
+        </span>
+        <span
+          className={cn(
+            'absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium',
+            hideName && 'invisible'
+          )}
+        >
+          Name
+        </span>
+      </TableHead>
+      <TableHead className="text-right">Mins</TableHead>
+      <TableHead className="text-right">Pts</TableHead>
+      <TableHead className="text-right">3pt</TableHead>
+      <TableHead className="text-right">Reb</TableHead>
+      <TableHead className="text-right">Ast</TableHead>
+      <TableHead className="text-right">Stl</TableHead>
+      <TableHead className="text-right">Blk</TableHead>
+      <TableHead className="text-right">Fg%</TableHead>
+      <TableHead className="text-right">Ft%</TableHead>
+      <TableHead className="text-right">TO</TableHead>
+    </TableRow>
   )
 }
 
