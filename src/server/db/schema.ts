@@ -32,9 +32,14 @@ export const games = createTable('games', {
     .references(() => teams.teamId),
   homeScore: integer().default(0).notNull(),
   awayScore: integer().default(0).notNull(),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 })
 
 export type Game = typeof games.$inferSelect
+export type GameInsert = typeof games.$inferInsert
 
 export const players = createTable('players', {
   playerId: integer().primaryKey().notNull(),
@@ -73,6 +78,10 @@ export const playerStats = createTable(
     turnovers: integer(),
     fouls: integer(),
     plusMinus: integer(),
+    updatedAt: timestamp({ withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     primaryKey({
@@ -83,6 +92,7 @@ export const playerStats = createTable(
 )
 
 export type PlayerStats = typeof playerStats.$inferSelect
+export type PlayerStatsInsert = typeof playerStats.$inferInsert
 
 const bytea = customType<{
   data: Buffer
@@ -99,7 +109,7 @@ export const apiKeys = createTable('api_keys', {
   encryptedKey: bytea().notNull(),
   iv: bytea().notNull(),
   keyHash: text().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  createdAt: timestamp({ withTimezone: true }).defaultNow(),
+  expiresAt: timestamp({ withTimezone: true }),
+  revokedAt: timestamp({ withTimezone: true }),
 })

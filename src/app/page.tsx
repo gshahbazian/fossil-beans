@@ -1,5 +1,6 @@
 import GameStats from '@/components/game-stats'
 import {
+  getDayOfLatestGame,
   getGamePlayerStats,
   getGamesOnDate,
   type GameWithTeams,
@@ -10,9 +11,8 @@ export const revalidate = 43200
 export const dynamicParams = false
 
 export default async function Home() {
-  // GABE: in the future we should get the day of the latest
-  // game from the db as the source of current day truth
-  const games = await getGamesOnDate('2025-02-13')
+  const dayOfLatestGame = await getDayOfLatestGame()
+  const games = dayOfLatestGame ? await getGamesOnDate(dayOfLatestGame) : []
 
   return (
     <div className="mx-auto flex w-screen max-w-4xl flex-col gap-8 py-8">
