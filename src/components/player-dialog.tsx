@@ -14,12 +14,12 @@ export default function PlayerDialog({
   isOpen,
   onClose,
   player,
-  game,
+  gameWithTeams,
 }: {
   isOpen: boolean
-  game: GameWithTeams
-  player: GamePlayerStat
   onClose: () => void
+  player: GamePlayerStat
+  gameWithTeams: GameWithTeams
 }) {
   const onOpenChange = (open: boolean) => {
     if (open) return
@@ -71,15 +71,16 @@ export default function PlayerDialog({
 
         <div className="flex flex-row justify-between pt-2 text-xs">
           <span className="font-bold">
-            {game.awayTeam.abbreviation}{' '}
+            {gameWithTeams.awayTeam.abbreviation}{' '}
             <span className="font-mono font-normal">
-              {game.game.awayScore}-{game.game.homeScore}
+              {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
             </span>{' '}
-            {game.homeTeam.abbreviation}
+            {gameWithTeams.homeTeam.abbreviation}
           </span>
 
           <span>
-            {game.game.gameTime.toLocaleString('en-US', {
+            {/* GABE: this is local date, change to PST date */}
+            {gameWithTeams.game.gameTime.toLocaleString('en-US', {
               day: 'numeric',
               month: 'numeric',
               year: '2-digit',
