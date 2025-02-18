@@ -80,6 +80,7 @@ export async function fetchGames(date: Date) {
       month: '2-digit',
       day: '2-digit',
       year: 'numeric',
+      timeZone: 'America/Los_Angeles',
     })
   )
 

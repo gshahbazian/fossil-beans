@@ -19,10 +19,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 403 })
   }
 
-  // GABE: currently testing with feb 13 games
-  const feb13 = new Date('2025-02-13T00:00:00-08:00')
+  const dryRun = !!request.nextUrl.searchParams.get('dryRun')
 
-  const nbaGames = await fetchGames(feb13)
+  const dateParam = request.nextUrl.searchParams.get('date')
+  const date = dateParam ? new Date(dateParam) : new Date()
+
+  const nbaGames = await fetchGames(date)
   const gameIds = new Set<string>()
   for (const game of nbaGames) {
     gameIds.add(game.GAME_ID)
@@ -31,6 +33,14 @@ export async function GET(request: NextRequest) {
   const boxScores = await Promise.all(
     Array.from(gameIds).map((gameId) => fetchBoxScore(gameId))
   )
+
+  if (boxScores.length === 0) {
+    return NextResponse.json({ error: 'No games found' })
+  }
+
+  if (dryRun) {
+    return NextResponse.json({ boxScores })
+  }
 
   const gamesToInsert: GameInsert[] = boxScores.map((boxScore) => {
     return {
@@ -85,6 +95,10 @@ async function insertPlayersFromGame(boxScore: BoxScore) {
     })
   })
 
+  if (playersToInsert.length === 0) {
+    return
+  }
+
   await db
     .insert(players)
     .values(playersToInsert)
@@ -126,6 +140,10 @@ async function insertPlayerStatsFromGame(boxScore: BoxScore) {
       }
     })
   })
+
+  if (playerStatsToInsert.length === 0) {
+    return
+  }
 
   await db
     .insert(playerStats)
