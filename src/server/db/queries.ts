@@ -10,6 +10,20 @@ import {
 import { eq, desc, sql, gt, and, asc } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 
+// Date string in format YYYY-MM-DD
+export async function getDayOfLatestGame(): Promise<string | undefined> {
+  const latestGame = await db
+    .select({
+      day: sql<string>`date(game_time AT TIME ZONE 'America/Los_Angeles')`,
+    })
+    .from(games)
+    .orderBy(desc(games.gameTime))
+    .limit(1)
+
+  if (!latestGame[0]) return undefined
+  return latestGame[0].day
+}
+
 export type GameWithTeams = {
   game: Game
   homeTeam: Team

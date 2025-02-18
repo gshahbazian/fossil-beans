@@ -3,11 +3,11 @@ import { BoxScore, fetchBoxScore } from '@/lib/nba/box-scores'
 import { fetchGames } from '@/lib/nba/games'
 import { db } from '@/server/db'
 import {
-  Game,
+  GameInsert,
   games,
   players,
   playerStats,
-  PlayerStats,
+  PlayerStatsInsert,
 } from '@/server/db/schema'
 import { sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     Array.from(gameIds).map((gameId) => fetchBoxScore(gameId))
   )
 
-  const gamesToInsert: Game[] = boxScores.map((boxScore) => {
+  const gamesToInsert: GameInsert[] = boxScores.map((boxScore) => {
     return {
       gameId: boxScore.game.gameId,
       gameTime: new Date(boxScore.game.gameTimeUTC),
@@ -98,7 +98,7 @@ async function insertPlayersFromGame(boxScore: BoxScore) {
 }
 
 async function insertPlayerStatsFromGame(boxScore: BoxScore) {
-  const playerStatsToInsert: PlayerStats[] = [
+  const playerStatsToInsert: PlayerStatsInsert[] = [
     boxScore.game.homeTeam,
     boxScore.game.awayTeam,
   ].flatMap((tp) => {
