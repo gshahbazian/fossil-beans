@@ -1,8 +1,8 @@
 import GameStats from '@/components/game-stats'
 import {
-  getDayOfLatestGame,
+  getPSTTimeOfLatestGame,
+  getAllGamesOnPSTDate,
   getGamePlayerStats,
-  getGamesOnDate,
   type GameWithTeams,
 } from '@/server/db/queries'
 
@@ -10,15 +10,27 @@ import {
 export const revalidate = 43200
 export const dynamicParams = false
 
+const formatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+})
+
 export default async function Home() {
-  const dayOfLatestGame = await getDayOfLatestGame()
-  const games = dayOfLatestGame ? await getGamesOnDate(dayOfLatestGame) : []
+  const pstTimeOfLatestGame = await getPSTTimeOfLatestGame()
+  const games = pstTimeOfLatestGame
+    ? await getAllGamesOnPSTDate(pstTimeOfLatestGame)
+    : []
 
   return (
     <div className="mx-auto flex w-screen max-w-4xl flex-col gap-8 py-8">
       <main className="relative flex flex-col gap-8 px-4">
         <h2 className="text-3xl font-semibold">
-          NBA Lines <span className="font-normal text-neutral-400">Feb 13</span>
+          NBA Lines{' '}
+          {pstTimeOfLatestGame && (
+            <span className="font-normal text-neutral-400">
+              {formatter.format(new Date(pstTimeOfLatestGame))}
+            </span>
+          )}
         </h2>
 
         {games.map((game) => (

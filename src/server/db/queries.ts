@@ -7,21 +7,20 @@ import {
   type Team,
   type Game,
 } from '@/server/db/schema'
-import { eq, desc, sql, gt, and, asc } from 'drizzle-orm'
+import { eq, desc, sql, and, asc } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 
-// Date string in format YYYY-MM-DD
-export async function getDayOfLatestGame(): Promise<string | undefined> {
+export async function getPSTTimeOfLatestGame() {
   const latestGame = await db
     .select({
-      day: sql<string>`date(game_time AT TIME ZONE 'America/Los_Angeles')`,
+      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`,
     })
     .from(games)
     .orderBy(desc(games.gameTime))
     .limit(1)
 
   if (!latestGame[0]) return undefined
-  return latestGame[0].day
+  return latestGame[0].pstTime
 }
 
 export type GameWithTeams = {
@@ -30,8 +29,9 @@ export type GameWithTeams = {
   awayTeam: Team
 }
 
-// Date string in format YYYY-MM-DD
-export async function getGamesOnDate(date: string): Promise<GameWithTeams[]> {
+export async function getAllGamesOnPSTDate(
+  date: string
+): Promise<GameWithTeams[]> {
   const homeTeamAlias = alias(teams, 'homeTeam')
   const awayTeamAlias = alias(teams, 'awayTeam')
 
@@ -44,12 +44,7 @@ export async function getGamesOnDate(date: string): Promise<GameWithTeams[]> {
     .from(games)
     .innerJoin(homeTeamAlias, eq(games.homeTeamId, homeTeamAlias.teamId))
     .innerJoin(awayTeamAlias, eq(games.awayTeamId, awayTeamAlias.teamId))
-    .where(
-      eq(
-        sql`date(${date})`,
-        sql`date(game_time AT TIME ZONE 'America/Los_Angeles')`
-      )
-    )
+    .where(sql`${date} = (game_time AT TIME ZONE 'America/Los_Angeles')::date`)
     .orderBy(asc(games.gameTime))
 }
 
@@ -103,10 +98,7 @@ export async function getGamePlayerStats(
     .innerJoin(teams, eq(playerStats.teamId, teams.teamId))
     .innerJoin(games, eq(playerStats.gameId, games.gameId))
     .where(
-      and(
-        eq(games.gameId, gameId),
-        gt(sql`EXTRACT(epoch FROM minutes_played)`, 0)
-      )
+      and(eq(games.gameId, gameId), sql`EXTRACT(epoch FROM minutes_played) > 0`)
     )
     .orderBy(desc(playerStats.minutesPlayed), desc(players.playerName))
 }

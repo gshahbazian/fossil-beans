@@ -1,7 +1,7 @@
 import { db } from '@/server/db'
 import { teams } from '@/server/db/schema'
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyRequest } from '@/lib/api-keys'
+import { verifyRequest } from '@/server/api-keys'
 
 export async function GET(request: NextRequest) {
   const isValid = await verifyRequest(request)

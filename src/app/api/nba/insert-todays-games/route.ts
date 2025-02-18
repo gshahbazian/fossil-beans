@@ -1,6 +1,6 @@
-import { verifyRequest } from '@/lib/api-keys'
-import { BoxScore, fetchBoxScore } from '@/lib/nba/box-scores'
-import { fetchGames } from '@/lib/nba/games'
+import { verifyRequest } from '@/server/api-keys'
+import { BoxScore, fetchBoxScore } from '@/server/nba/box-scores'
+import { fetchGames } from '@/server/nba/games'
 import { db } from '@/server/db'
 import {
   GameInsert,

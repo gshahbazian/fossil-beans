@@ -1,5 +1,5 @@
 import { env } from '@/env'
-import { storeApiKey } from '@/lib/api-keys'
+import { storeApiKey } from '@/server/api-keys'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
