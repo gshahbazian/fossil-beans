@@ -25,6 +25,7 @@ export default function GameStats({
   useEffect(() => {
     if (!headerRef.current) return
 
+    // GABE: this isnt working correctly if the page starts scrolled to the bottom and you scroll up
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
         if (!entries[0]) return
@@ -46,19 +47,14 @@ export default function GameStats({
 
   return (
     <>
-      <div className="flex flex-col gap-8">
+      <div className="container-grid child-col-[2] relative col-span-full gap-y-8">
         <hr />
 
         <div
           ref={headerRef}
-          className="bg-background group sticky -top-0.5 z-2 sm:relative sm:top-auto sm:z-auto"
+          className="bg-background border-background container-grid sticky -top-0.5 z-2 col-span-full data-stuck:border-b data-stuck:shadow-sm sm:relative sm:top-auto sm:z-auto dark:border-neutral-900"
         >
-          {/* Hacks to get the shadow to be wider than the div, but not x-scroll the page */}
-          <div className="border-background pointer-events-none absolute -right-4 -bottom-3 -left-4 h-3 overflow-x-hidden border-t opacity-0 transition-opacity group-data-stuck:opacity-100 sm:hidden dark:border-neutral-900">
-            <div className="absolute -top-2 -right-4 -left-4 h-2 shadow-md" />
-          </div>
-
-          <h2 className="text-2xl font-bold">
+          <h2 className="col-[2] text-2xl font-bold">
             {game.awayTeam.abbreviation}{' '}
             <span className="font-mono font-normal">
               {game.game.awayScore}-{game.game.homeScore}
