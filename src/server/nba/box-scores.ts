@@ -196,6 +196,10 @@ export async function fetchBoxScore(gameId: string) {
     }
   )
 
+  if (!res.ok) {
+    throw new Error(`Failed to fetch box score for game ${gameId}`)
+  }
+
   const data = await res.json()
   return data as BoxScore
 }

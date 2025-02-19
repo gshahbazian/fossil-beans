@@ -1,6 +1,5 @@
 import { verifyRequest } from '@/server/api-keys'
 import { BoxScore, fetchBoxScore } from '@/server/nba/box-scores'
-import { fetchGames } from '@/server/nba/games'
 import { db } from '@/server/db'
 import {
   GameInsert,
@@ -12,6 +11,8 @@ import {
 import { sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
+import { fetchGames } from '@/server/nba/game-log'
+import { fetchTodayScoreboard } from '@/server/nba/today-scoreboard'
 
 export async function GET(request: NextRequest) {
   const isValid = await verifyRequest(request)
@@ -20,22 +21,28 @@ export async function GET(request: NextRequest) {
   }
 
   const dryRun = !!request.nextUrl.searchParams.get('dryRun')
-
   const dateParam = request.nextUrl.searchParams.get('date')
-  const date = dateParam ? new Date(dateParam) : new Date()
 
-  const nbaGames = await fetchGames(date)
-  const gameIds = new Set<string>()
-  for (const game of nbaGames) {
-    gameIds.add(game.GAME_ID)
+  let boxScores: BoxScore[] = []
+
+  try {
+    const gameIds = dateParam
+      ? await gameIdsForDate(new Date(dateParam))
+      : await gameIdsForToday()
+
+    boxScores = await Promise.all(
+      Array.from(gameIds).map((gameId) => fetchBoxScore(gameId))
+    )
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      { error: 'Failed to fetch box scores' },
+      { status: 500 }
+    )
   }
 
-  const boxScores = await Promise.all(
-    Array.from(gameIds).map((gameId) => fetchBoxScore(gameId))
-  )
-
   if (boxScores.length === 0) {
-    return NextResponse.json({ error: 'No games found' })
+    return NextResponse.json({ error: 'No games found' }, { status: 404 })
   }
 
   if (dryRun) {
@@ -169,4 +176,25 @@ async function insertPlayerStatsFromGame(boxScore: BoxScore) {
         plusMinus: sql`excluded.plus_minus`,
       },
     })
+}
+
+async function gameIdsForDate(date: Date) {
+  const nbaGames = await fetchGames(date)
+
+  const gameIds = new Set<string>()
+  for (const game of nbaGames) {
+    gameIds.add(game.GAME_ID)
+  }
+
+  return Array.from(gameIds)
+}
+
+async function gameIdsForToday() {
+  const todayScoreboard = await fetchTodayScoreboard()
+  const gameIds = new Set<string>()
+  for (const game of todayScoreboard.scoreboard.games) {
+    gameIds.add(game.gameId)
+  }
+
+  return Array.from(gameIds)
 }

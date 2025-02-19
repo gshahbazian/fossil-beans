@@ -91,6 +91,10 @@ export async function fetchGames(date: Date) {
     }
   )
 
+  if (!res.ok) {
+    throw new Error(`Failed to fetch game logs`)
+  }
+
   const data = await res.json()
   return parseGameLog(data)
 }
