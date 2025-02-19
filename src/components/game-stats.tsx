@@ -52,7 +52,7 @@ export default function GameStats({
 
         <div
           ref={headerRef}
-          className="group bg-background border-background container-grid sticky -top-0.5 z-2 col-span-full data-stuck:border-b data-stuck:shadow-sm sm:relative sm:top-auto sm:z-auto dark:border-neutral-900"
+          className="bg-background border-background container-grid sticky -top-0.5 z-2 col-span-full data-stuck:border-b data-stuck:shadow-sm sm:relative sm:top-auto sm:z-auto dark:border-neutral-900"
         >
           <h2 className="col-[2] text-2xl font-bold">
             {game.awayTeam.abbreviation}{' '}
