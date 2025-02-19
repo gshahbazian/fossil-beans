@@ -50,3 +50,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .container-grid {
+    display: grid;
+    grid-template-columns:
+      1fr min(56rem, calc(100% - (calc(var(--spacing) * 4))))
+      1fr;
+    column-gap: calc(var(--spacing) * 2);
+  }
+}
+
+@utility child-col-* {
+  & > * {
+    grid-column: --value([integer]);
+  }
+}

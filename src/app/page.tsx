@@ -22,22 +22,20 @@ export default async function Home() {
     : []
 
   return (
-    <div className="mx-auto flex w-screen max-w-4xl flex-col gap-8 py-8">
-      <main className="relative flex flex-col gap-8 px-4">
-        <h2 className="text-3xl font-semibold">
-          NBA Lines{' '}
-          {pstTimeOfLatestGame && (
-            <span className="font-normal text-neutral-400">
-              {formatter.format(new Date(pstTimeOfLatestGame))}
-            </span>
-          )}
-        </h2>
+    <main className="container-grid w-screen gap-y-8 py-8">
+      <h2 className="col-[2] text-3xl font-semibold">
+        NBA Lines{' '}
+        {pstTimeOfLatestGame && (
+          <span className="font-normal text-neutral-400">
+            {formatter.format(new Date(pstTimeOfLatestGame))}
+          </span>
+        )}
+      </h2>
 
-        {games.map((game) => (
-          <GameEntry key={game.game.gameId} game={game} />
-        ))}
-      </main>
-    </div>
+      {games.map((game) => (
+        <GameEntry key={game.game.gameId} game={game} />
+      ))}
+    </main>
   )
 }
 
