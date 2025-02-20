@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return (
     <div
-      className="scrollbar-hidden relative w-full overflow-auto"
+      className="relative w-full overflow-auto"
       style={{
         scrollbarWidth: 'none',
       }} /** Safari would not respect this coming from tw : ( */

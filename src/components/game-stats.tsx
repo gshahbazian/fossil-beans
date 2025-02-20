@@ -46,23 +46,23 @@ export default function GameStats({
   }, [headerRef])
 
   return (
-    <>
-      <div className="container-grid child-col-[2] relative col-span-full gap-y-8">
-        <hr />
+    <div className="relative col-span-full grid grid-cols-subgrid gap-y-8">
+      <hr className="col-[2]" />
 
-        <div
-          ref={headerRef}
-          className="bg-background border-background container-grid sticky -top-0.5 z-2 col-span-full data-stuck:border-b data-stuck:shadow-sm sm:relative sm:top-auto sm:z-auto data-stuck:sm:border-none data-stuck:sm:shadow-none dark:border-neutral-900"
-        >
-          <h2 className="col-[2] text-2xl font-bold">
-            {game.awayTeam.abbreviation}{' '}
-            <span className="font-mono font-normal">
-              {game.game.awayScore}-{game.game.homeScore}
-            </span>{' '}
-            {game.homeTeam.abbreviation}
-          </h2>
-        </div>
+      <div
+        ref={headerRef}
+        className="bg-background border-background sticky -top-0.5 z-2 col-span-full grid grid-cols-subgrid data-stuck:border-b data-stuck:shadow-sm sm:relative sm:top-auto sm:z-auto data-stuck:sm:border-none data-stuck:sm:shadow-none dark:border-neutral-900"
+      >
+        <h2 className="col-[2] text-2xl font-bold">
+          {game.awayTeam.abbreviation}{' '}
+          <span className="font-mono font-normal">
+            {game.game.awayScore}-{game.game.homeScore}
+          </span>{' '}
+          {game.homeTeam.abbreviation}
+        </h2>
+      </div>
 
+      <div className="col-[2]">
         <StatsTable stats={stats} onPlayerClicked={onPlayerClicked} />
       </div>
 
@@ -74,6 +74,6 @@ export default function GameStats({
           gameWithTeams={game}
         />
       )}
-    </>
+    </div>
   )
 }
