@@ -56,7 +56,7 @@ export const playerStats = createTable(
   {
     gameId: varchar({ length: 100 })
       .notNull()
-      .references(() => games.gameId),
+      .references(() => games.gameId, { onDelete: 'cascade' }),
     playerId: integer()
       .notNull()
       .references(() => players.playerId),
