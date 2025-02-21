@@ -1,5 +1,9 @@
 import { verifyRequest } from '@/server/api-keys'
-import { BoxScore, fetchBoxScore } from '@/server/nba/box-scores'
+import {
+  BoxScore,
+  ForbiddenError,
+  fetchBoxScore,
+} from '@/server/nba/box-scores'
 import { db } from '@/server/db'
 import {
   GameInsert,
@@ -23,16 +27,28 @@ export async function GET(request: NextRequest) {
   const dryRun = !!request.nextUrl.searchParams.get('dryRun')
   const dateParam = request.nextUrl.searchParams.get('date')
 
-  let boxScores: BoxScore[] = []
+  const boxScores: BoxScore[] = []
 
   try {
     const gameIds = dateParam
       ? await gameIdsForDate(new Date(dateParam))
       : await gameIdsForToday()
 
-    boxScores = await Promise.all(
+    const resolved = await Promise.allSettled(
       Array.from(gameIds).map((gameId) => fetchBoxScore(gameId))
     )
+
+    for (const boxScore of resolved) {
+      if (boxScore.status === 'fulfilled') {
+        boxScores.push(boxScore.value)
+      } else if (boxScore.status === 'rejected') {
+        console.error(boxScore.reason)
+
+        if (!(boxScore.reason instanceof ForbiddenError)) {
+          throw boxScore.reason
+        }
+      }
+    }
   } catch (error) {
     console.error(error)
     return NextResponse.json(

@@ -188,6 +188,13 @@ export type BoxScore = {
   game: Game
 }
 
+export class ForbiddenError extends Error {
+  constructor(message?: string) {
+    super(message)
+    this.name = 'ForbiddenError'
+  }
+}
+
 export async function fetchBoxScore(gameId: string) {
   const res = await fetch(
     `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json`,
@@ -197,6 +204,11 @@ export async function fetchBoxScore(gameId: string) {
   )
 
   if (!res.ok) {
+    if (res.status === 403) {
+      // NBA API returns 403 when the game is not yet started
+      throw new ForbiddenError(`Forbidden: ${gameId}`)
+    }
+
     throw new Error(`Failed to fetch box score for game ${gameId}`)
   }
 
