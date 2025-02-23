@@ -93,12 +93,15 @@ export async function GET(request: NextRequest) {
   await Promise.all(boxScores.map(insertPlayerStatsFromGame))
 
   revalidatePath('/')
-  try {
-    await fetch('https://fossil-beans.vercel.app/api/revalidate', {
-      headers: request.headers,
-    })
-  } catch (error) {
-    console.error(error)
+
+  if (request.nextUrl.searchParams.get('revalidate') === 'true') {
+    try {
+      await fetch('https://fossil-beans.vercel.app/api/revalidate', {
+        headers: request.headers,
+      })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return NextResponse.json({ success: true })
@@ -159,6 +162,7 @@ async function insertPlayerStatsFromGame(boxScore: BoxScore) {
         freeThrowsAttempted: player.statistics.freeThrowsAttempted,
         turnovers: player.statistics.turnovers,
         fouls: player.statistics.foulsPersonal,
+        espnPoints: calculateEspnPoints(player.statistics),
         plusMinus: player.statistics.plusMinusPoints,
       }
     })
@@ -189,9 +193,41 @@ async function insertPlayerStatsFromGame(boxScore: BoxScore) {
         freeThrowsAttempted: sql`excluded.free_throws_attempted`,
         turnovers: sql`excluded.turnovers`,
         fouls: sql`excluded.fouls`,
+        espnPoints: sql`excluded.espn_points`,
         plusMinus: sql`excluded.plus_minus`,
       },
     })
+}
+
+function calculateEspnPoints(
+  stats: BoxScore['game']['homeTeam']['players'][number]['statistics']
+): number {
+  /**
+   * Point = 1
+   * 3PM = 1
+   * FGA = -1
+   * FGM = 2
+   * FTA = -1
+   * FTM = 1
+   * REB = 1
+   * AST = 2
+   * STL = 4
+   * BLK = 4
+   * TOV = -2
+   */
+  return (
+    stats.points +
+    stats.threePointersMade +
+    stats.fieldGoalsMade * 2 +
+    stats.freeThrowsMade +
+    stats.fieldGoalsAttempted * -1 +
+    stats.freeThrowsAttempted * -1 +
+    stats.reboundsTotal +
+    stats.assists * 2 +
+    stats.steals * 4 +
+    stats.blocks * 4 +
+    stats.turnovers * -2
+  )
 }
 
 async function gameIdsForDate(date: Date) {

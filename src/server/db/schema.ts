@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   varchar,
   integer,
@@ -8,6 +9,8 @@ import {
   uuid,
   customType,
   text,
+  index,
+  smallint,
 } from 'drizzle-orm/pg-core'
 
 // https://orm.drizzle.team/docs/goodies#multi-project-schema
@@ -30,8 +33,8 @@ export const games = createTable('games', {
   awayTeamId: integer()
     .notNull()
     .references(() => teams.teamId),
-  homeScore: integer().default(0).notNull(),
-  awayScore: integer().default(0).notNull(),
+  homeScore: smallint().default(0).notNull(),
+  awayScore: smallint().default(0).notNull(),
   updatedAt: timestamp({ withTimezone: true })
     .notNull()
     .defaultNow()
@@ -64,20 +67,21 @@ export const playerStats = createTable(
       .notNull()
       .references(() => teams.teamId),
     minutesPlayed: interval().default('PT00M00.00S'),
-    points: integer(),
-    rebounds: integer(),
-    assists: integer(),
-    steals: integer(),
-    blocks: integer(),
-    fieldGoalsMade: integer(),
-    fieldGoalsAttempted: integer(),
-    threePointersMade: integer(),
-    threePointersAttempted: integer(),
-    freeThrowsMade: integer(),
-    freeThrowsAttempted: integer(),
-    turnovers: integer(),
-    fouls: integer(),
-    plusMinus: integer(),
+    points: smallint(),
+    rebounds: smallint(),
+    assists: smallint(),
+    steals: smallint(),
+    blocks: smallint(),
+    fieldGoalsMade: smallint(),
+    fieldGoalsAttempted: smallint(),
+    threePointersMade: smallint(),
+    threePointersAttempted: smallint(),
+    freeThrowsMade: smallint(),
+    freeThrowsAttempted: smallint(),
+    turnovers: smallint(),
+    fouls: smallint(),
+    plusMinus: smallint(),
+    espnPoints: smallint(),
     updatedAt: timestamp({ withTimezone: true })
       .notNull()
       .defaultNow()
@@ -88,6 +92,18 @@ export const playerStats = createTable(
       name: 'player_stats_pk',
       columns: [table.gameId, table.playerId],
     }),
+
+    // Partial index for filtering
+    index('idx_player_stats_minutes_epoch')
+      .on(table.gameId)
+      .where(sql`EXTRACT(epoch FROM ${table.minutesPlayed}) > 0`),
+
+    // Ordering index for sorting
+    index('idx_player_stats_order').on(
+      sql`${table.espnPoints} DESC`,
+      sql`${table.minutesPlayed} DESC`,
+      table.playerId
+    ),
   ]
 )
 

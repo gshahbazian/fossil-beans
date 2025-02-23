@@ -22,4 +22,8 @@ if (env.NODE_ENV === 'development') {
 }
 
 const sql = neon(connectionString)
-export const db = drizzle({ client: sql, schema, casing: 'snake_case' })
+export const db = drizzle({
+  client: sql,
+  schema,
+  casing: 'snake_case',
+})

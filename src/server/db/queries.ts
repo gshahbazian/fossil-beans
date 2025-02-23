@@ -65,8 +65,6 @@ export type GamePlayerStat = {
   freeThrowsMade: number | null
   freeThrowsAttempted: number | null
   turnovers: number | null
-  fouls: number | null
-  plusMinus: number | null
 }
 
 export async function getGamePlayerStats(
@@ -90,8 +88,6 @@ export async function getGamePlayerStats(
       freeThrowsMade: playerStats.freeThrowsMade,
       freeThrowsAttempted: playerStats.freeThrowsAttempted,
       turnovers: playerStats.turnovers,
-      fouls: playerStats.fouls,
-      plusMinus: playerStats.plusMinus,
     })
     .from(playerStats)
     .innerJoin(players, eq(playerStats.playerId, players.playerId))
@@ -100,5 +96,9 @@ export async function getGamePlayerStats(
     .where(
       and(eq(games.gameId, gameId), sql`EXTRACT(epoch FROM minutes_played) > 0`)
     )
-    .orderBy(desc(playerStats.minutesPlayed), desc(players.playerName))
+    .orderBy(
+      desc(playerStats.espnPoints),
+      desc(playerStats.minutesPlayed),
+      playerStats.playerId
+    )
 }
