@@ -42,5 +42,8 @@ export default async function Home() {
 async function GameEntry({ game }: { game: GameWithTeams }) {
   const stats = await getGamePlayerStats(game.game.gameId)
 
+  // GABE: add a nice 'starting soon' here
+  if (stats.length === 0) return null
+
   return <GameStats game={game} stats={stats} />
 }

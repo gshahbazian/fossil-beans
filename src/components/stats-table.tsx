@@ -16,8 +16,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { trimStart } from '@/lib/trim-start'
 import { cn } from '@/lib/utils'
+import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 
 export default function StatsTable({
   stats,
@@ -116,9 +116,7 @@ function StatRow({
   stat: GamePlayerStat
   onPlayerClicked: (stat: GamePlayerStat) => void
 }) {
-  const trimmedMinutes = stat.minutesPlayed
-    ? trimStart(stat.minutesPlayed, '00:').split('.')[0]
-    : '00:00'
+  const trimmedMinutes = trimIntervalToMinsSecs(stat.minutesPlayed ?? '00:00')
 
   return (
     <TableRow

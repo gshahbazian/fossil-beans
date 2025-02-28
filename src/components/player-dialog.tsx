@@ -8,7 +8,7 @@ import {
 import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import Image from 'next/image'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
-import { trimStart } from '@/lib/trim-start'
+import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 
 export default function PlayerDialog({
   isOpen,
@@ -26,9 +26,7 @@ export default function PlayerDialog({
     onClose()
   }
 
-  const trimmedMinutes = player.minutesPlayed
-    ? trimStart(player.minutesPlayed, '00:').split('.')[0]
-    : '00:00'
+  const trimmedMinutes = trimIntervalToMinsSecs(player.minutesPlayed ?? '00:00')
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
