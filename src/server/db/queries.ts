@@ -23,6 +23,20 @@ export async function getPSTTimeOfLatestGame() {
   return latestGame[0].pstTime
 }
 
+export async function getPSTTimeOfLatestGameBefore(date: string) {
+  const latestGame = await db
+    .select({
+      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`,
+    })
+    .from(games)
+    .where(sql`(game_time AT TIME ZONE 'America/Los_Angeles')::date < ${date}`)
+    .orderBy(desc(games.gameTime))
+    .limit(1)
+
+  if (!latestGame[0]) return undefined
+  return latestGame[0].pstTime
+}
+
 export type GameWithTeams = {
   game: Game
   homeTeam: Team
