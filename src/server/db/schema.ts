@@ -35,6 +35,8 @@ export const games = createTable('games', {
     .references(() => teams.teamId),
   homeScore: smallint().default(0).notNull(),
   awayScore: smallint().default(0).notNull(),
+  gameStatus: varchar({ length: 100 }), // ex: 'Final', 'Q1 8:59'
+  period: smallint(),
   updatedAt: timestamp({ withTimezone: true })
     .notNull()
     .defaultNow()

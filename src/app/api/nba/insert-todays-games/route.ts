@@ -73,6 +73,8 @@ export async function GET(request: NextRequest) {
       awayTeamId: boxScore.game.awayTeam.teamId,
       homeScore: boxScore.game.homeTeam.score,
       awayScore: boxScore.game.awayTeam.score,
+      gameStatus: boxScore.game.gameStatusText,
+      period: boxScore.game.period,
     }
   })
   await db
@@ -86,6 +88,8 @@ export async function GET(request: NextRequest) {
         awayTeamId: sql`excluded.away_team_id`,
         homeScore: sql`excluded.home_score`,
         awayScore: sql`excluded.away_score`,
+        gameStatus: sql`excluded.game_status`,
+        period: sql`excluded.period`,
       },
     })
 

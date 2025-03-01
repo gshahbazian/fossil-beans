@@ -74,14 +74,20 @@ export default function PlayerDialog({
               {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
             </span>{' '}
             {gameWithTeams.homeTeam.abbreviation}
+            {gameWithTeams.game.gameStatus && (
+              <span className="font-mono font-medium">
+                {' '}
+                / {gameWithTeams.game.gameStatus}
+              </span>
+            )}
           </span>
 
           <span>
-            {/* GABE: this is local date, change to PST date */}
             {gameWithTeams.game.gameTime.toLocaleString('en-US', {
               day: 'numeric',
               month: 'numeric',
               year: '2-digit',
+              timeZone: 'America/Los_Angeles',
             })}
           </span>
         </div>
