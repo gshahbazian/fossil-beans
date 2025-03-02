@@ -2,7 +2,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
@@ -10,7 +9,15 @@ import Image from 'next/image'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 import { X } from 'lucide-react'
-import { useState, useEffect } from 'react'
+
+// Extended type to handle properties we're using that might not be in the original type
+interface ExtendedPlayerStat extends GamePlayerStat {
+  teamId?: string;
+  jerseyNum?: string;
+  position?: string;
+  height?: string;
+  plusMinus?: number;
+}
 
 export default function PlayerDialog({
   isOpen,
@@ -45,161 +52,227 @@ export default function PlayerDialog({
     : 0
 
   // Player image URL for both the main image and the background
-  const playerImageUrl = `https://cdn.nba.com/headshots/nba/latest/260x190/${player.playerId}.png`
+  const playerImageUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`
+
+  // Cast player to extended type to access additional properties
+  const extendedPlayer = player as ExtendedPlayerStat
+
+  // For simplicity, just use the home team colors since we don't have reliable team ID matching
+  const playerTeam = gameWithTeams.homeTeam
+  const opposingTeam = gameWithTeams.awayTeam
+  
+  // Get team colors with default fallback
+  const teamColors = getTeamColors(playerTeam.abbreviation)
+  const primaryColor = teamColors?.primary || '#17408B'
+  const secondaryColor = teamColors?.secondary || '#C9082A'
+
+  // Create gradient for header only, remove subtle gradient
+  const headerGradient = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden rounded-xl">
+      <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-lg [&>button]:hidden">
         <VisuallyHidden.Root>
+          <DialogTitle>Player Stats: {player.playerName}</DialogTitle>
           <DialogDescription>Stats for {player.playerName}</DialogDescription>
         </VisuallyHidden.Root>
 
-        {/* Header with player info */}
-        <div className="relative overflow-hidden">
-          {/* Blurred background image */}
-          <div className="absolute inset-0 overflow-hidden">
-            <div 
-              className="absolute inset-0 scale-110 blur-2xl opacity-60 bg-center bg-cover"
-              style={{ 
-                backgroundImage: `url(${playerImageUrl})`,
-                backgroundPosition: 'center 30%',
-                backgroundColor: 'rgba(0, 0, 0, 0.1)',
-              }}
-            />
-            {/* Overlay to enhance contrast and readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent" />
-          </div>
-          
-          {/* Player image with transparent background - positioned at bottom */}
-          <div className="relative flex justify-center h-56 z-10 pt-12 pb-1">
-            <div className="absolute bottom-0 h-36">
-              <Image
-                src={playerImageUrl}
-                alt={`${player.playerName} headshot`}
-                className="w-auto h-full object-contain object-bottom filter drop-shadow-lg"
-                width={195}
-                height={142}
-                priority
-              />
-            </div>
-          </div>
-          
-          {/* Player name and close button */}
-          <DialogHeader className="absolute top-0 left-0 right-0 z-20 p-4">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-bold text-white drop-shadow-md">
-                {player.playerName}
-              </DialogTitle>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-full p-1 bg-black/20 text-white hover:bg-black/40 hover:text-white backdrop-blur-sm"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </DialogHeader>
-        </div>
+        <div className="flex flex-col">
+          {/* Header with player info */}
+          <div 
+            className="relative h-56 overflow-hidden"
+            style={{
+              background: headerGradient,
+              marginBottom: '-1px', /* Ensure no gap between elements */
+            }}
+          >
+            {/* Custom close button with improved visibility */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-4 right-5 z-50 rounded-full p-2 bg-black/30 text-white hover:bg-black/50 backdrop-blur-sm transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
 
-        {/* Bento-style grid for stats */}
-        <div className="py-1 px-4">
-          {/* Key stats in bento grid */}
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <BentoStat 
-              label="PTS" 
-              value={player.points} 
-              className="bg-neutral-50/80 dark:bg-neutral-800/80 backdrop-blur-sm"
-              size="large"
-            />
-            <BentoStat 
-              label="REB" 
-              value={player.rebounds} 
-              className="bg-neutral-50/80 dark:bg-neutral-800/80 backdrop-blur-sm"
-              size="large"
-            />
-            <BentoStat 
-              label="AST" 
-              value={player.assists} 
-              className="bg-neutral-50/80 dark:bg-neutral-800/80 backdrop-blur-sm"
-              size="large"
-            />
-          </div>
-          
-          {/* Two vertical cards side by side */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Game activity stats card */}
-            <div className="bg-neutral-50/80 dark:bg-neutral-800/80 backdrop-blur-sm rounded-xl p-4 border border-black/5 dark:border-white/5">
-              <h3 className="text-xs font-semibold mb-3 text-neutral-500 dark:text-neutral-400 uppercase">Game Activity</h3>
-              <div className="grid grid-cols-1 gap-y-3">
-                <StatItem label="Minutes" value={trimmedMinutes} />
-                <StatItem label="Steals" value={player.steals} />
-                <StatItem label="Blocks" value={player.blocks} />
-                <StatItem label="Turnovers" value={player.turnovers} />
+            {/* Team logo watermark */}
+            <div className="absolute right-0 bottom-0 h-56 w-full flex items-end justify-end pr-5 overflow-hidden">
+              <div className="transform translate-y-8">
+                <span className="font-bold text-white/10 text-[140px] font-sans tracking-tighter">
+                  {playerTeam.abbreviation}
+                </span>
               </div>
             </div>
             
-            {/* Shooting stats card */}
-            <div className="bg-neutral-50/80 dark:bg-neutral-800/80 backdrop-blur-sm rounded-xl p-4 border border-black/5 dark:border-white/5">
-              <h3 className="text-xs font-semibold mb-3 text-neutral-500 dark:text-neutral-400 uppercase">Shooting</h3>
-              <div className="grid grid-cols-1 gap-y-3">
-                <StatItem 
-                  label="Field Goals" 
-                  value={`${player.fieldGoalsMade || 0}/${player.fieldGoalsAttempted || 0}`} 
-                  subValue={fgPercentage > 0 ? `${fgPercentage}%` : null} 
-                />
-                <StatItem 
-                  label="Free Throws" 
-                  value={`${player.freeThrowsMade || 0}/${player.freeThrowsAttempted || 0}`} 
-                  subValue={ftPercentage > 0 ? `${ftPercentage}%` : null} 
-                />
-                <StatItem 
-                  label="3-Pointers" 
-                  value={`${player.threePointersMade || 0}/${player.threePointersAttempted || 0}`} 
-                  subValue={threePointPercentage > 0 ? `${threePointPercentage}%` : null}
-                />
-                <StatItem 
-                  label="3PT Efficiency" 
-                  value={player.threePointersAttempted && player.threePointersAttempted > 0 
-                    ? `${threePointPercentage}%` 
-                    : '0%'} 
-                  subValue={player.threePointersMade && player.threePointersMade > 0 
-                    ? `${player.threePointersMade} made` 
-                    : player.threePointersAttempted && player.threePointersAttempted > 0 
-                      ? '0 made' 
-                      : null}
-                />
+            {/* Player image */}
+            <div className="absolute bottom-0 right-0 h-48 flex items-end">
+              <Image
+                src={playerImageUrl}
+                alt={`${player.playerName} headshot`}
+                className="h-full w-auto object-contain drop-shadow-lg"
+                width={260}
+                height={190}
+                priority
+              />
+            </div>
+            
+            {/* Player info */}
+            <div className="absolute bottom-0 left-0 p-5 text-white z-10">
+              <div className="flex items-center space-x-2 mb-1">
+                <span className="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-medium">
+                  #{extendedPlayer.jerseyNum || '00'}
+                </span>
+                <span className="text-sm font-medium">{playerTeam.abbreviation}</span>
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight drop-shadow-md">
+                {player.playerName}
+              </h2>
+              <div className="text-sm font-medium opacity-80 mt-1">
+                {extendedPlayer.position || 'Position N/A'} • {extendedPlayer.height || 'Height N/A'}
               </div>
             </div>
+            
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/40 to-transparent" />
           </div>
-        </div>
-        
-        {/* Game info footer */}
-        <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
-          <div className="flex flex-row justify-between items-center text-xs">
-            <div className="flex items-center space-x-2">
-              <span className="font-bold">
-                {gameWithTeams.awayTeam.abbreviation}
-                <span className="font-mono font-normal mx-1">
-                  {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
-                </span>
-                {gameWithTeams.homeTeam.abbreviation}
+
+          {/* Game context bar */}
+          <div 
+            className="bg-neutral-900 text-white px-5 py-3 flex justify-between items-center text-xs"
+            style={{ marginTop: '-1px' }} /* Ensure no gap between elements */
+          >
+            <div className="flex items-center space-x-4">
+              <TeamLogo teamAbbr={gameWithTeams.awayTeam.abbreviation} size="xs" shape="pill" />
+              <span className="font-mono font-bold">
+                {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
+              </span>
+              <TeamLogo teamAbbr={gameWithTeams.homeTeam.abbreviation} size="xs" shape="pill" />
+            </div>
+            
+            <div className="flex items-center">
+              <span className="text-neutral-400 mr-2">
+                {gameWithTeams.game.gameTime.toLocaleString('en-US', {
+                  day: 'numeric',
+                  month: 'short',
+                  timeZone: 'America/Los_Angeles',
+                })}
               </span>
               {gameWithTeams.game.gameStatus && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                <span className="px-3 py-1 rounded-full bg-neutral-800 text-neutral-300 uppercase text-[10px] font-bold tracking-wider">
                   {gameWithTeams.game.gameStatus}
                 </span>
               )}
             </div>
+          </div>
 
-            <span className="text-neutral-500 dark:text-neutral-400">
-              {gameWithTeams.game.gameTime.toLocaleString('en-US', {
-                day: 'numeric',
-                month: 'numeric',
-                year: '2-digit',
-                timeZone: 'America/Los_Angeles',
-              })}
-            </span>
+          {/* Stats content - all in one section */}
+          <div className="p-5 bg-neutral-50 dark:bg-neutral-900">
+            {/* Key stats */}
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <StatCard 
+                label="PTS" 
+                value={player.points || 0} 
+                bgGradient={primaryColor}
+                size="large"
+              />
+              <StatCard 
+                label="REB" 
+                value={player.rebounds || 0} 
+                size="large"
+              />
+              <StatCard 
+                label="AST" 
+                value={player.assists || 0} 
+                size="large"
+              />
+            </div>
+            
+            {/* Secondary stats */}
+            <div className="grid grid-cols-4 gap-3 mb-3">
+              <StatCard label="MIN" value={trimmedMinutes} />
+              <StatCard label="STL" value={player.steals || 0} />
+              <StatCard label="BLK" value={player.blocks || 0} />
+              <StatCard label="TO" value={player.turnovers || 0} />
+            </div>
+            
+            {/* Shooting stats */}
+            <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow-sm mb-3">
+              <h3 className="text-xs uppercase font-bold text-neutral-500 dark:text-neutral-400 mb-3">
+                Shooting
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                <ShootingStatBar 
+                  label="FG" 
+                  made={player.fieldGoalsMade || 0} 
+                  attempted={player.fieldGoalsAttempted || 0} 
+                  percentage={fgPercentage}
+                  color={primaryColor}
+                  useGradient={false}
+                />
+                <ShootingStatBar 
+                  label="3PT" 
+                  made={player.threePointersMade || 0} 
+                  attempted={player.threePointersAttempted || 0} 
+                  percentage={threePointPercentage}
+                  color={primaryColor}
+                  useGradient={false}
+                />
+                <ShootingStatBar 
+                  label="FT" 
+                  made={player.freeThrowsMade || 0} 
+                  attempted={player.freeThrowsAttempted || 0} 
+                  percentage={ftPercentage}
+                  color={primaryColor}
+                  useGradient={false}
+                />
+              </div>
+            </div>
+            
+            {/* Additional stats in a clean grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow-sm">
+                <h3 className="text-xs uppercase font-bold text-neutral-500 dark:text-neutral-400 mb-3">
+                  Field Goals
+                </h3>
+                <div className="space-y-2">
+                  <StatRow 
+                    label="Made" 
+                    value={player.fieldGoalsMade || 0} 
+                  />
+                  <StatRow 
+                    label="Attempted" 
+                    value={player.fieldGoalsAttempted || 0} 
+                  />
+                  <StatRow 
+                    label="Percentage" 
+                    value={`${fgPercentage}%`} 
+                    highlight
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow-sm">
+                <h3 className="text-xs uppercase font-bold text-neutral-500 dark:text-neutral-400 mb-3">
+                  3-Pointers
+                </h3>
+                <div className="space-y-2">
+                  <StatRow 
+                    label="Made" 
+                    value={player.threePointersMade || 0} 
+                  />
+                  <StatRow 
+                    label="Attempted" 
+                    value={player.threePointersAttempted || 0} 
+                  />
+                  <StatRow 
+                    label="Percentage" 
+                    value={`${threePointPercentage}%`} 
+                    highlight
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -207,58 +280,174 @@ export default function PlayerDialog({
   )
 }
 
-// Bento-style stat component
-function BentoStat({
+// Modern stat card component
+function StatCard({
   label,
   value,
-  subValue = null,
-  className = "",
+  subValue,
+  bgGradient,
   size = "normal"
 }: {
   label: string
   value: React.ReactNode
   subValue?: string | null
-  className?: string
+  bgGradient?: string
   size?: "normal" | "large"
 }) {
+  const hasBg = !!bgGradient
+  
   return (
-    <div className={`flex flex-col justify-center items-center p-3 rounded-xl border border-black/5 dark:border-white/5 ${className}`}>
-      <span className={`font-mono font-bold ${size === "large" ? "text-3xl" : "text-xl"}`}>
-        {value || '0'}
-      </span>
-      {subValue && (
-        <span className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-          {subValue}
+    <div 
+      className={`
+        rounded-xl overflow-hidden shadow-sm
+        ${hasBg ? 'text-white' : 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white'}
+      `}
+      style={hasBg ? { backgroundColor: bgGradient } : {}}
+    >
+      <div className={`
+        flex flex-col items-center justify-center p-3
+        ${hasBg ? 'bg-black/5' : ''}
+      `}>
+        <span className={`font-mono font-bold ${size === "large" ? "text-3xl" : "text-xl"}`}>
+          {value}
         </span>
-      )}
-      <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-1">
-        {label}
-      </span>
+        {subValue && (
+          <span className={`text-xs mt-0.5 ${hasBg ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}>
+            {subValue}
+          </span>
+        )}
+        <span className={`text-xs font-medium mt-1 ${hasBg ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}>
+          {label}
+        </span>
+      </div>
     </div>
   )
 }
 
-// Stat item for horizontal cards
-function StatItem({
+// Shooting stat bar component
+function ShootingStatBar({
   label,
-  value,
-  subValue = null,
+  made,
+  attempted,
+  percentage,
+  color,
+  useGradient = false
 }: {
   label: string
-  value: React.ReactNode
-  subValue?: string | null
+  made: number
+  attempted: number
+  percentage: number
+  color: string
+  useGradient?: boolean
 }) {
   return (
     <div className="flex flex-col">
-      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
-      <div className="flex items-baseline">
-        <span className="font-mono text-sm font-semibold">{value || '0'}</span>
-        {subValue && (
-          <span className="ml-1 text-xs text-neutral-500 dark:text-neutral-400">
-            {subValue}
-          </span>
-        )}
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
+        <span className="text-sm font-mono font-bold">{percentage}%</span>
+      </div>
+      <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+        <div 
+          className="h-full rounded-full opacity-80"
+          style={{ 
+            width: `${percentage}%`, 
+            backgroundColor: color,
+            minWidth: made > 0 ? '4px' : '0'
+          }}
+        />
+      </div>
+      <div className="text-xs text-right mt-1 text-neutral-500 dark:text-neutral-400">
+        {made}/{attempted}
       </div>
     </div>
   )
+}
+
+// Stat row component for clean display of label/value pairs
+function StatRow({
+  label,
+  value,
+  highlight = false
+}: {
+  label: string
+  value: React.ReactNode
+  highlight?: boolean
+}) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-sm text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span className={`font-mono ${highlight ? 'font-bold text-base' : 'text-sm'}`}>{value}</span>
+    </div>
+  )
+}
+
+// Team logo component
+function TeamLogo({ 
+  teamAbbr, 
+  size = "normal",
+  shape = "circle"
+}: { 
+  teamAbbr: string
+  size?: "xs" | "normal" | "large"
+  shape?: "circle" | "pill"
+}) {
+  // In a real app, you would have actual team logos
+  // This is a placeholder that displays the team abbreviation in a styled div
+  return (
+    <div className={`
+      flex items-center justify-center bg-white/10 backdrop-blur-sm
+      ${shape === "pill" ? "rounded-full px-3 py-1" : "rounded-full"}
+      ${size === "xs" && shape === "circle" ? "w-6 h-6 text-xs" : 
+        size === "xs" && shape === "pill" ? "h-5 min-w-[32px] text-xs" :
+        size === "large" ? "w-16 h-16 text-2xl" : 
+        "w-10 h-10 text-lg"}
+    `}>
+      <span className="font-bold text-white">{teamAbbr}</span>
+    </div>
+  )
+}
+
+// Helper function to get team colors (placeholder)
+function getTeamColors(teamAbbr: string) {
+  // This is just a placeholder that assigns colors based on team abbreviation
+  const colorMap: Record<string, {primary: string, secondary: string, accent: string}> = {
+    // Eastern Conference
+    'ATL': {primary: '#E03A3E', secondary: '#C1D32F', accent: '#26282A'},
+    'BOS': {primary: '#007A33', secondary: '#BA9653', accent: '#963821'},
+    'BKN': {primary: '#000000', secondary: '#FFFFFF', accent: '#777D84'},
+    'CHA': {primary: '#1D1160', secondary: '#00788C', accent: '#A1A1A4'},
+    'CHI': {primary: '#CE1141', secondary: '#000000', accent: '#FFFFFF'},
+    'CLE': {primary: '#860038', secondary: '#041E42', accent: '#FDBB30'},
+    'DET': {primary: '#C8102E', secondary: '#1D42BA', accent: '#BEC0C2'},
+    'IND': {primary: '#002D62', secondary: '#FDBB30', accent: '#BEC0C2'},
+    'MIA': {primary: '#98002E', secondary: '#F9A01B', accent: '#000000'},
+    'MIL': {primary: '#00471B', secondary: '#EEE1C6', accent: '#0077C0'},
+    'NYK': {primary: '#006BB6', secondary: '#F58426', accent: '#BEC0C2'},
+    'ORL': {primary: '#0077C0', secondary: '#C4CED4', accent: '#000000'},
+    'PHI': {primary: '#006BB6', secondary: '#ED174C', accent: '#002B5C'},
+    'TOR': {primary: '#CE1141', secondary: '#000000', accent: '#A1A1A4'},
+    'WAS': {primary: '#002B5C', secondary: '#E31837', accent: '#C4CED4'},
+    
+    // Western Conference
+    'DAL': {primary: '#00538C', secondary: '#002B5E', accent: '#B8C4CA'},
+    'DEN': {primary: '#0E2240', secondary: '#FEC524', accent: '#8B2131'},
+    'GSW': {primary: '#1D428A', secondary: '#FFC72C', accent: '#26282A'},
+    'HOU': {primary: '#CE1141', secondary: '#000000', accent: '#C4CED4'},
+    'LAC': {primary: '#C8102E', secondary: '#1D428A', accent: '#BEC0C2'},
+    'LAL': {primary: '#552583', secondary: '#FDB927', accent: '#000000'},
+    'MEM': {primary: '#5D76A9', secondary: '#12173F', accent: '#F5B112'},
+    'MIN': {primary: '#0C2340', secondary: '#236192', accent: '#78BE20'},
+    'NOP': {primary: '#0C2340', secondary: '#C8102E', accent: '#85714D'},
+    'OKC': {primary: '#007AC1', secondary: '#EF3B24', accent: '#002D62'},
+    'PHX': {primary: '#1D1160', secondary: '#E56020', accent: '#000000'},
+    'POR': {primary: '#E03A3E', secondary: '#000000', accent: '#FFFFFF'},
+    'SAC': {primary: '#5A2D81', secondary: '#63727A', accent: '#000000'},
+    'SAS': {primary: '#C4CED4', secondary: '#000000', accent: '#EF426F'},
+    'UTA': {primary: '#002B5C', secondary: '#00471B', accent: '#F9A01B'},
+    
+    // Default fallback
+    'DEFAULT': {primary: '#17408B', secondary: '#C9082A', accent: '#17408B'},
+  }
+  
+  return colorMap[teamAbbr] || colorMap['DEFAULT']
 }

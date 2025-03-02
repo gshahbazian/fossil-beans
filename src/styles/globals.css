@@ -3,7 +3,7 @@
 @plugin "tailwindcss-animate";
 
 @theme inline {
-  --font-sans: Geist, ui-sans-serif;
+  --font-sans: Inter, ui-sans-serif;
   --font-mono: var(--font-ibm-plex-mono), ui-monospace;
 }
 

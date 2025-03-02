@@ -1,5 +1,5 @@
 import '@/styles/globals.css'
-import { Geist } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { IBM_Plex_Mono } from 'next/font/google'
 import { type Metadata } from 'next'
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
 }
 
-const giest = Geist({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] })
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${giest.className} ${ibmPlexMono.variable}`}>
+    <html lang="en" className={`${inter.className} ${ibmPlexMono.variable}`}>
       <body className="overflow-x-hidden">{children}</body>
     </html>
   )
