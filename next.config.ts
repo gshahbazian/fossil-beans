@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.nba.com',
         pathname: '/headshots/nba/latest/**',
       },
+      {
+        hostname: 'cdn.nba.com',
+        pathname: '/logos/nba/**',
+      },
     ],
   },
 }

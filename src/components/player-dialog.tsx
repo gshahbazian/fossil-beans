@@ -97,11 +97,16 @@ export default function PlayerDialog({
             </button>
 
             {/* Team logo watermark */}
-            <div className="absolute right-0 bottom-0 h-56 w-full flex items-end justify-end pr-5 overflow-hidden">
-              <div className="transform translate-y-8">
-                <span className="font-bold text-white/10 text-[140px] font-sans tracking-tighter">
-                  {playerTeam.abbreviation}
-                </span>
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+              <div className="opacity-10">
+                <Image 
+                  src={`https://cdn.nba.com/logos/nba/${getTeamIdFromAbbr(playerTeam.abbreviation)}/global/L/logo.svg`}
+                  alt={`${playerTeam.abbreviation} logo`}
+                  width={300}
+                  height={300}
+                  className="object-contain"
+                  priority
+                />
               </div>
             </div>
             
@@ -139,19 +144,19 @@ export default function PlayerDialog({
 
           {/* Game context bar */}
           <div 
-            className="bg-neutral-900 text-white px-5 py-3 flex justify-between items-center text-xs"
+            className="bg-neutral-900 text-white px-5 py-3 flex justify-between items-center"
             style={{ marginTop: '-1px' }} /* Ensure no gap between elements */
           >
-            <div className="flex items-center space-x-4">
-              <TeamLogo teamAbbr={gameWithTeams.awayTeam.abbreviation} size="xs" shape="pill" />
-              <span className="font-mono font-bold">
+            <div className="flex items-center">
+              <TeamLogo teamAbbr={gameWithTeams.awayTeam.abbreviation} size="xs" shape="pill" logoPosition="left" />
+              <span className="font-mono font-bold mx-4 text-sm">
                 {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
               </span>
-              <TeamLogo teamAbbr={gameWithTeams.homeTeam.abbreviation} size="xs" shape="pill" />
+              <TeamLogo teamAbbr={gameWithTeams.homeTeam.abbreviation} size="xs" shape="pill" logoPosition="right" />
             </div>
             
             <div className="flex items-center">
-              <span className="text-neutral-400 mr-2">
+              <span className="text-neutral-400 mr-2 text-xs">
                 {gameWithTeams.game.gameTime.toLocaleString('en-US', {
                   day: 'numeric',
                   month: 'short',
@@ -385,26 +390,132 @@ function StatRow({
 function TeamLogo({ 
   teamAbbr, 
   size = "normal",
-  shape = "circle"
+  shape = "circle",
+  logoPosition = "left"
 }: { 
   teamAbbr: string
   size?: "xs" | "normal" | "large"
   shape?: "circle" | "pill"
+  logoPosition?: "left" | "right"
 }) {
-  // In a real app, you would have actual team logos
-  // This is a placeholder that displays the team abbreviation in a styled div
+  // Get the team ID from the abbreviation
+  const teamId = getTeamIdFromAbbr(teamAbbr);
+  
+  // Set dimensions based on size
+  const dimensions = {
+    xs: { width: 24, height: 24 },
+    normal: { width: 40, height: 40 },
+    large: { width: 64, height: 64 }
+  };
+  
+  const { width, height } = dimensions[size];
+  
+  // Use the NBA CDN for team logos
+  const logoUrl = `https://cdn.nba.com/logos/nba/${teamId}/global/L/logo.svg`;
+  
+  // Determine padding classes based on shape and logo position
+  let paddingClasses = "";
+  if (shape === "pill") {
+    paddingClasses = logoPosition === "left" 
+      ? "pl-0 pr-3"
+      : "pl-3 pr-0";
+  }
+  
+  // For pill shape, we'll show the logo and team abbreviation
+  if (shape === "pill") {
+    // Logo and text elements
+    const logoElement = (
+      <div className="flex items-center justify-center rounded-full bg-white/10 p-0.5">
+        <Image 
+          src={logoUrl}
+          alt={`${teamAbbr} logo`}
+          width={size === "xs" ? 20 : size === "large" ? 32 : 24}
+          height={size === "xs" ? 20 : size === "large" ? 32 : 24}
+          className="object-contain"
+        />
+      </div>
+    );
+    
+    const textElement = (
+      <span className="font-bold text-sm">{teamAbbr}</span>
+    );
+    
+    return (
+      <div className={`
+        flex items-center bg-neutral-800 rounded-full
+        ${paddingClasses}
+      `}>
+        {logoPosition === "left" ? (
+          <>
+            {logoElement}
+            <span className="ml-1.5">{textElement}</span>
+          </>
+        ) : (
+          <>
+            <span className="mr-1.5">{textElement}</span>
+            {logoElement}
+          </>
+        )}
+      </div>
+    );
+  }
+  
+  // For circle shape, just show the logo
   return (
     <div className={`
-      flex items-center justify-center bg-white/10 backdrop-blur-sm
-      ${shape === "pill" ? "rounded-full px-3 py-1" : "rounded-full"}
-      ${size === "xs" && shape === "circle" ? "w-6 h-6 text-xs" : 
-        size === "xs" && shape === "pill" ? "h-5 min-w-[32px] text-xs" :
-        size === "large" ? "w-16 h-16 text-2xl" : 
-        "w-10 h-10 text-lg"}
+      flex items-center justify-center overflow-hidden rounded-full
+      ${size === "xs" ? "w-6 h-6" :
+        size === "large" ? "w-16 h-16" : 
+        "w-10 h-10"}
     `}>
-      <span className="font-bold text-white">{teamAbbr}</span>
+      <Image 
+        src={logoUrl}
+        alt={`${teamAbbr} logo`}
+        width={width}
+        height={height}
+        className="object-contain"
+      />
     </div>
   )
+}
+
+// Helper function to get team ID from abbreviation
+function getTeamIdFromAbbr(abbr: string): string {
+  // NBA team IDs mapping
+  const teamIds: Record<string, string> = {
+    'ATL': '1610612737',
+    'BOS': '1610612738',
+    'BKN': '1610612751',
+    'CHA': '1610612766',
+    'CHI': '1610612741',
+    'CLE': '1610612739',
+    'DAL': '1610612742',
+    'DEN': '1610612743',
+    'DET': '1610612765',
+    'GSW': '1610612744',
+    'HOU': '1610612745',
+    'IND': '1610612754',
+    'LAC': '1610612746',
+    'LAL': '1610612747',
+    'MEM': '1610612763',
+    'MIA': '1610612748',
+    'MIL': '1610612749',
+    'MIN': '1610612750',
+    'NOP': '1610612740',
+    'NYK': '1610612752',
+    'OKC': '1610612760',
+    'ORL': '1610612753',
+    'PHI': '1610612755',
+    'PHX': '1610612756',
+    'POR': '1610612757',
+    'SAC': '1610612758',
+    'SAS': '1610612759',
+    'TOR': '1610612761',
+    'UTA': '1610612762',
+    'WAS': '1610612764',
+  };
+  
+  return teamIds[abbr] || '1610612747'; // Default to Lakers if not found
 }
 
 // Helper function to get team colors (placeholder)
