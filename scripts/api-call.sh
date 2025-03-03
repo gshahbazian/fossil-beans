@@ -1,60 +1,96 @@
 #!/bin/bash
 
-# Load API key from .env.local
-API_KEY=$(grep API_KEY .env.local | cut -d '"' -f 2)
+# Script for making API calls to the NBA API
+# Usage: ./scripts/api-call.sh [endpoint] [params]
 
-# Check if API_KEY is empty
-if [ -z "$API_KEY" ]; then
-  echo "Error: API_KEY not found in .env.local"
-  exit 1
-fi
+# Set default values
+API_BASE_URL="https://api.example.com/v1"
+API_KEY=${NBA_API_KEY:-""}
+OUTPUT_DIR="./data"
+FORMAT="json"
 
-# Default values
-METHOD="GET"
-CONTENT_TYPE="application/json"
-DATA=""
+# Print usage information
+function print_usage() {
+  echo "Usage: $0 [options] <endpoint>"
+  echo ""
+  echo "Options:"
+  echo "  -k, --key KEY       API key (can also be set via NBA_API_KEY env var)"
+  echo "  -o, --output DIR    Output directory (default: ./data)"
+  echo "  -f, --format FORMAT Output format: json, csv (default: json)"
+  echo "  -h, --help          Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  $0 games/schedule --date=2023-12-25"
+  echo "  $0 players/stats --player-id=123456 --season=2022-23"
+}
 
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --url|-u)
-      URL="$2"
+# Parse command line arguments
+PARAMS=""
+while (( "$#" )); do
+  case "$1" in
+    -k|--key)
+      API_KEY=$2
       shift 2
       ;;
-    --method|-m)
-      METHOD="$2"
+    -o|--output)
+      OUTPUT_DIR=$2
       shift 2
       ;;
-    --data|-d)
-      DATA="$2"
+    -f|--format)
+      FORMAT=$2
       shift 2
       ;;
-    *)
-      echo "Unknown option: $1"
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    --) # end argument parsing
+      shift
+      break
+      ;;
+    -*|--*=) # unsupported flags
+      echo "Error: Unsupported flag $1" >&2
+      print_usage
       exit 1
+      ;;
+    *) # preserve positional arguments
+      PARAMS="$PARAMS $1"
+      shift
       ;;
   esac
 done
 
-# Check if URL is provided
-if [ -z "$URL" ]; then
-  echo "Usage: $0 --url <url> [--method <GET|POST>] [--data <json_data>]"
-  echo "Example: $0 --url http://localhost:3000/api/nba/insert-teams"
+# Set positional arguments
+eval set -- "$PARAMS"
+
+# Check if endpoint is provided
+if [ -z "$1" ]; then
+  echo "Error: No endpoint specified" >&2
+  print_usage
   exit 1
 fi
 
-# Build curl command
-CURL_CMD="curl --request $METHOD --url \"$URL\" --header \"Authorization: Bearer $API_KEY\""
+ENDPOINT=$1
+shift
 
-# Add content type and data if needed
-if [ "$METHOD" = "POST" ]; then
-  CURL_CMD="$CURL_CMD --header \"Content-Type: $CONTENT_TYPE\""
-  if [ ! -z "$DATA" ]; then
-    CURL_CMD="$CURL_CMD --data '$DATA'"
-  fi
+# Create output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Build the API URL with query parameters
+QUERY_PARAMS=""
+for param in "$@"; do
+  QUERY_PARAMS="${QUERY_PARAMS}&${param}"
+done
+
+API_URL="${API_BASE_URL}/${ENDPOINT}?format=${FORMAT}${QUERY_PARAMS}"
+
+# Make the API call
+echo "Making API call to: $API_URL"
+if [ -z "$API_KEY" ]; then
+  echo "Warning: No API key provided. Some endpoints may require authentication."
+  curl -s "$API_URL" > "${OUTPUT_DIR}/${ENDPOINT//\//_}.${FORMAT}"
+else
+  curl -s -H "Authorization: Bearer ${API_KEY}" "$API_URL" > "${OUTPUT_DIR}/${ENDPOINT//\//_}.${FORMAT}"
 fi
 
-# Execute the command
-echo "Executing: $CURL_CMD"
-eval $CURL_CMD
-echo "" 
+echo "Response saved to ${OUTPUT_DIR}/${ENDPOINT//\//_}.${FORMAT}" 

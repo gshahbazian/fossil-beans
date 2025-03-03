@@ -8,7 +8,7 @@ import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import Image from 'next/image'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
-import { X } from 'lucide-react'
+import { IBM_Plex_Mono } from 'next/font/google'
 
 // Extended type to handle properties we're using that might not be in the original type
 interface ExtendedPlayerStat extends GamePlayerStat {
@@ -37,22 +37,19 @@ export default function PlayerDialog({
 
   const trimmedMinutes = trimIntervalToMinsSecs(player.minutesPlayed ?? '00:00')
   
-  // Calculate field goal and free throw percentages for display
+  // Calculate field goal and free throw percentages for display with one decimal place
   const fgPercentage = player.fieldGoalsAttempted && player.fieldGoalsAttempted > 0
-    ? Math.round((player.fieldGoalsMade || 0) / player.fieldGoalsAttempted * 100)
-    : 0
+    ? ((player.fieldGoalsMade || 0) / player.fieldGoalsAttempted * 100).toFixed(1)
+    : "0.0"
     
   const ftPercentage = player.freeThrowsAttempted && player.freeThrowsAttempted > 0
-    ? Math.round((player.freeThrowsMade || 0) / player.freeThrowsAttempted * 100)
-    : 0
+    ? ((player.freeThrowsMade || 0) / player.freeThrowsAttempted * 100).toFixed(1)
+    : "0.0"
     
-  // Calculate 3-point percentage
+  // Calculate 3-point percentage with one decimal place
   const threePointPercentage = player.threePointersAttempted && player.threePointersAttempted > 0
-    ? Math.round((player.threePointersMade || 0) / player.threePointersAttempted * 100)
-    : 0
-
-  // Player image URL for both the main image and the background
-  const playerImageUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`
+    ? ((player.threePointersMade || 0) / player.threePointersAttempted * 100).toFixed(1)
+    : "0.0"
 
   // Cast player to extended type to access additional properties
   const extendedPlayer = player as ExtendedPlayerStat
@@ -61,17 +58,35 @@ export default function PlayerDialog({
   const playerTeam = gameWithTeams.homeTeam
   const opposingTeam = gameWithTeams.awayTeam
   
-  // Get team colors with default fallback
+  // Get team colors with P3 color fallback
   const teamColors = getTeamColors(playerTeam.abbreviation)
-  const primaryColor = teamColors?.primary || '#17408B'
-  const secondaryColor = teamColors?.secondary || '#C9082A'
+  const primaryColor = teamColors?.primary || 'oklch(0.5 0.2 240)'
+  const secondaryColor = teamColors?.secondary || 'oklch(0.6 0.25 30)'
+  const darkPrimaryColor = teamColors?.darkPrimary || 'oklch(0.55 0.2 240)'
+  const darkSecondaryColor = teamColors?.darkSecondary || 'oklch(0.65 0.25 30)'
 
-  // Create gradient for header only, remove subtle gradient
-  const headerGradient = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
+  // Create gradient for header with dark mode variation
+  const headerGradient = `linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)`
+  const headerStyle = {
+    background: headerGradient,
+    '--primary-color': primaryColor,
+    '--secondary-color': secondaryColor,
+  } as React.CSSProperties
+
+  // Add dark mode CSS variables
+  const darkModeStyle = {
+    '--primary-color': darkPrimaryColor,
+    '--secondary-color': darkSecondaryColor,
+  } as React.CSSProperties
+
+  // Player image URL
+  const playerImageUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-lg [&>button]:hidden">
+      <DialogContent 
+        className="max-w-md p-0 overflow-hidden rounded-2xl border-0 dark:border dark:border-white/5 shadow-lg"
+      >
         <VisuallyHidden.Root>
           <DialogTitle>Player Stats: {player.playerName}</DialogTitle>
           <DialogDescription>Stats for {player.playerName}</DialogDescription>
@@ -80,34 +95,25 @@ export default function PlayerDialog({
         <div className="flex flex-col">
           {/* Header with player info */}
           <div 
-            className="relative h-56 overflow-hidden"
-            style={{
-              background: headerGradient,
-              marginBottom: '-1px', /* Ensure no gap between elements */
-            }}
+            className="relative h-56 overflow-hidden dark:[&>*]:dark-mode-colors"
+            style={headerStyle}
           >
-            {/* Custom close button with improved visibility */}
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute top-4 right-5 z-50 rounded-full p-2 bg-black/30 text-white hover:bg-black/50 backdrop-blur-sm transition-colors"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
+            <style jsx>{`
+              .dark-mode-colors {
+                --primary-color: ${darkPrimaryColor};
+                --secondary-color: ${darkSecondaryColor};
+              }
+            `}</style>
             {/* Team logo watermark */}
-            <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-              <div className="opacity-10">
-                <Image 
-                  src={`https://cdn.nba.com/logos/nba/${getTeamIdFromAbbr(playerTeam.abbreviation)}/global/L/logo.svg`}
-                  alt={`${playerTeam.abbreviation} logo`}
-                  width={300}
-                  height={300}
-                  className="object-contain"
-                  priority
-                />
-              </div>
+            <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none opacity-10">
+              <Image 
+                src={`https://cdn.nba.com/logos/nba/${getTeamIdFromAbbr(playerTeam.abbreviation)}/global/L/logo.svg`}
+                alt={`${playerTeam.abbreviation} logo`}
+                width={300}
+                height={300}
+                className="object-contain scale-[2]"
+                priority
+              />
             </div>
             
             {/* Player image */}
@@ -116,8 +122,8 @@ export default function PlayerDialog({
                 src={playerImageUrl}
                 alt={`${player.playerName} headshot`}
                 className="h-full w-auto object-contain drop-shadow-lg"
-                width={260}
-                height={190}
+                width={1040}
+                height={760}
                 priority
               />
             </div>
@@ -126,7 +132,7 @@ export default function PlayerDialog({
             <div className="absolute bottom-0 left-0 p-5 text-white z-10">
               <div className="flex items-center space-x-2 mb-1">
                 <span className="bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-medium">
-                  #{extendedPlayer.jerseyNum || '00'}
+                  #{extendedPlayer.jerseyNum || ''}
                 </span>
                 <span className="text-sm font-medium">{playerTeam.abbreviation}</span>
               </div>
@@ -144,8 +150,7 @@ export default function PlayerDialog({
 
           {/* Game context bar */}
           <div 
-            className="bg-neutral-900 text-white px-5 py-3 flex justify-between items-center"
-            style={{ marginTop: '-1px' }} /* Ensure no gap between elements */
+            className="bg-black text-white px-5 py-3 flex justify-between items-center"
           >
             <div className="flex items-center">
               <TeamLogo teamAbbr={gameWithTeams.awayTeam.abbreviation} size="xs" shape="pill" logoPosition="left" />
@@ -164,7 +169,7 @@ export default function PlayerDialog({
                 })}
               </span>
               {gameWithTeams.game.gameStatus && (
-                <span className="px-3 py-1 rounded-full bg-neutral-800 text-neutral-300 uppercase text-[10px] font-bold tracking-wider">
+                <span className="px-3 py-1 rounded-full bg-neutral-800 text-neutral-300 uppercase text-[0.625rem] font-bold tracking-wider">
                   {gameWithTeams.game.gameStatus}
                 </span>
               )}
@@ -179,6 +184,7 @@ export default function PlayerDialog({
                 label="PTS" 
                 value={player.points || 0} 
                 bgGradient={primaryColor}
+                darkBgGradient={darkPrimaryColor}
                 size="large"
               />
               <StatCard 
@@ -202,7 +208,7 @@ export default function PlayerDialog({
             </div>
             
             {/* Shooting stats */}
-            <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow-sm mb-3">
+            <div className="bg-white dark:bg-neutral-800 dark:border dark:border-white/5 rounded-xl p-4 shadow-sm mb-3">
               <h3 className="text-xs uppercase font-bold text-neutral-500 dark:text-neutral-400 mb-3">
                 Shooting
               </h3>
@@ -211,24 +217,27 @@ export default function PlayerDialog({
                   label="FG" 
                   made={player.fieldGoalsMade || 0} 
                   attempted={player.fieldGoalsAttempted || 0} 
-                  percentage={fgPercentage}
+                  percentage={parseFloat(fgPercentage)}
                   color={primaryColor}
+                  darkColor={darkPrimaryColor}
                   useGradient={false}
                 />
                 <ShootingStatBar 
                   label="3PT" 
                   made={player.threePointersMade || 0} 
                   attempted={player.threePointersAttempted || 0} 
-                  percentage={threePointPercentage}
+                  percentage={parseFloat(threePointPercentage)}
                   color={primaryColor}
+                  darkColor={darkPrimaryColor}
                   useGradient={false}
                 />
                 <ShootingStatBar 
                   label="FT" 
                   made={player.freeThrowsMade || 0} 
                   attempted={player.freeThrowsAttempted || 0} 
-                  percentage={ftPercentage}
+                  percentage={parseFloat(ftPercentage)}
                   color={primaryColor}
+                  darkColor={darkPrimaryColor}
                   useGradient={false}
                 />
               </div>
@@ -236,7 +245,7 @@ export default function PlayerDialog({
             
             {/* Additional stats in a clean grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow-sm">
+              <div className="bg-white dark:bg-neutral-800 dark:border dark:border-white/5 rounded-xl p-4 shadow-sm">
                 <h3 className="text-xs uppercase font-bold text-neutral-500 dark:text-neutral-400 mb-3">
                   Field Goals
                 </h3>
@@ -257,7 +266,7 @@ export default function PlayerDialog({
                 </div>
               </div>
               
-              <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 shadow-sm">
+              <div className="bg-white dark:bg-neutral-800 dark:border dark:border-white/5 rounded-xl p-4 shadow-sm">
                 <h3 className="text-xs uppercase font-bold text-neutral-500 dark:text-neutral-400 mb-3">
                   3-Pointers
                 </h3>
@@ -291,12 +300,14 @@ function StatCard({
   value,
   subValue,
   bgGradient,
+  darkBgGradient,
   size = "normal"
 }: {
   label: string
   value: React.ReactNode
   subValue?: string | null
   bgGradient?: string
+  darkBgGradient?: string
   size?: "normal" | "large"
 }) {
   const hasBg = !!bgGradient
@@ -305,10 +316,19 @@ function StatCard({
     <div 
       className={`
         rounded-xl overflow-hidden shadow-sm
-        ${hasBg ? 'text-white' : 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white'}
+        ${hasBg ? 'text-white' : 'bg-white dark:bg-neutral-800 dark:border dark:border-white/5 text-neutral-900 dark:text-white'}
       `}
-      style={hasBg ? { backgroundColor: bgGradient } : {}}
+      style={hasBg ? { 
+        backgroundColor: bgGradient,
+        '--dark-bg-gradient': darkBgGradient
+      } as React.CSSProperties : {}}
+      data-has-dark-bg={hasBg && !!darkBgGradient ? 'true' : undefined}
     >
+      <style jsx>{`
+        [data-has-dark-bg="true"]:is(.dark [data-has-dark-bg="true"]) {
+          background-color: var(--dark-bg-gradient);
+        }
+      `}</style>
       <div className={`
         flex flex-col items-center justify-center p-3
         ${hasBg ? 'bg-black/5' : ''}
@@ -336,6 +356,7 @@ function ShootingStatBar({
   attempted,
   percentage,
   color,
+  darkColor,
   useGradient = false
 }: {
   label: string
@@ -343,24 +364,32 @@ function ShootingStatBar({
   attempted: number
   percentage: number
   color: string
+  darkColor: string
   useGradient?: boolean
 }) {
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-baseline mb-1">
         <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
-        <span className="text-sm font-mono font-bold">{percentage}%</span>
+        <span className="text-sm font-mono font-bold">{percentage.toFixed(1)}%</span>
       </div>
       <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
         <div 
-          className="h-full rounded-full opacity-80"
+          className="h-full rounded-full opacity-80 dark:border dark:border-white/15"
           style={{ 
             width: `${percentage}%`, 
             backgroundColor: color,
-            minWidth: made > 0 ? '4px' : '0'
-          }}
+            minWidth: made > 0 ? '4px' : '0',
+            '--dark-color': darkColor
+          } as React.CSSProperties}
+          data-dark-color="true"
         />
       </div>
+      <style jsx>{`
+        [data-dark-color="true"]:is(.dark [data-dark-color="true"]) {
+          background-color: var(--dark-color) !important;
+        }
+      `}</style>
       <div className="text-xs text-right mt-1 text-neutral-500 dark:text-neutral-400">
         {made}/{attempted}
       </div>
@@ -515,50 +544,312 @@ function getTeamIdFromAbbr(abbr: string): string {
     'WAS': '1610612764',
   };
   
-  return teamIds[abbr] || '1610612747'; // Default to Lakers if not found
+  return teamIds[abbr] || '';
 }
 
-// Helper function to get team colors (placeholder)
+// Team colors using OKLCH color space for better P3 display
 function getTeamColors(teamAbbr: string) {
-  // This is just a placeholder that assigns colors based on team abbreviation
-  const colorMap: Record<string, {primary: string, secondary: string, accent: string}> = {
+  // Helper function to create dark mode variants with appropriate adjustments
+  const adjustForDarkMode = (color: string): string => {
+    // Parse the OKLCH color to get components
+    const match = color.match(/oklch\(([0-9.]+) ([0-9.]+) ([0-9.]+)\)/);
+    if (!match || match.length < 4) return color;
+    
+    const lightness = Number(match[1]);
+    const chroma = Number(match[2]);
+    const hue = Number(match[3]);
+    
+    if (isNaN(lightness) || isNaN(chroma) || isNaN(hue)) return color;
+    
+    // For dark purples and blues (hue between 240-300), reduce chroma and increase lightness
+    if (hue >= 240 && hue <= 300) {
+      // Desaturate and lighten dark purples and blues
+      const newLightness = Math.min(lightness + 0.2, 0.9);
+      const newChroma = Math.max(chroma - 0.05, 0.1);
+      return `oklch(${newLightness} ${newChroma} ${hue})`;
+    }
+    
+    // For other colors, just increase lightness slightly
+    const newLightness = Math.min(lightness + 0.1, 0.9);
+    return `oklch(${newLightness} ${chroma} ${hue})`;
+  };
+
+  const colorMap: Record<string, {
+    primary: string, 
+    secondary: string, 
+    accent: string,
+    darkPrimary: string,
+    darkSecondary: string,
+    darkAccent: string
+  }> = {
     // Eastern Conference
-    'ATL': {primary: '#E03A3E', secondary: '#C1D32F', accent: '#26282A'},
-    'BOS': {primary: '#007A33', secondary: '#BA9653', accent: '#963821'},
-    'BKN': {primary: '#000000', secondary: '#FFFFFF', accent: '#777D84'},
-    'CHA': {primary: '#1D1160', secondary: '#00788C', accent: '#A1A1A4'},
-    'CHI': {primary: '#CE1141', secondary: '#000000', accent: '#FFFFFF'},
-    'CLE': {primary: '#860038', secondary: '#041E42', accent: '#FDBB30'},
-    'DET': {primary: '#C8102E', secondary: '#1D42BA', accent: '#BEC0C2'},
-    'IND': {primary: '#002D62', secondary: '#FDBB30', accent: '#BEC0C2'},
-    'MIA': {primary: '#98002E', secondary: '#F9A01B', accent: '#000000'},
-    'MIL': {primary: '#00471B', secondary: '#EEE1C6', accent: '#0077C0'},
-    'NYK': {primary: '#006BB6', secondary: '#F58426', accent: '#BEC0C2'},
-    'ORL': {primary: '#0077C0', secondary: '#C4CED4', accent: '#000000'},
-    'PHI': {primary: '#006BB6', secondary: '#ED174C', accent: '#002B5C'},
-    'TOR': {primary: '#CE1141', secondary: '#000000', accent: '#A1A1A4'},
-    'WAS': {primary: '#002B5C', secondary: '#E31837', accent: '#C4CED4'},
+    'ATL': {
+      primary: 'oklch(0.55 0.25 30)', 
+      secondary: 'oklch(0.8 0.15 120)', 
+      accent: 'oklch(0.2 0.02 240)',
+      darkPrimary: 'oklch(0.65 0.25 30)', 
+      darkSecondary: 'oklch(0.85 0.15 120)', 
+      darkAccent: 'oklch(0.7 0.1 30)'
+    },
+    'BOS': {
+      primary: 'oklch(0.45 0.18 150)', 
+      secondary: 'oklch(0.7 0.1 80)', 
+      accent: 'oklch(0.4 0.2 30)',
+      darkPrimary: 'oklch(0.6 0.15 150)', 
+      darkSecondary: 'oklch(0.75 0.1 80)', 
+      darkAccent: 'oklch(0.65 0.2 30)'
+    },
+    'BKN': {
+      primary: 'oklch(0.1 0.01 240)', 
+      secondary: 'oklch(0.98 0.01 240)', 
+      accent: 'oklch(0.6 0.02 240)',
+      darkPrimary: 'oklch(0.3 0.01 240)', 
+      darkSecondary: 'oklch(0.9 0.01 240)', 
+      darkAccent: 'oklch(0.8 0.05 240)'
+    },
+    'CHA': {
+      primary: 'oklch(0.3 0.2 280)', 
+      secondary: 'oklch(0.5 0.18 200)', 
+      accent: 'oklch(0.7 0.02 240)',
+      darkPrimary: 'oklch(0.5 0.15 280)', 
+      darkSecondary: 'oklch(0.6 0.15 200)', 
+      darkAccent: 'oklch(0.8 0.02 240)'
+    },
+    'CHI': {
+      primary: 'oklch(0.5 0.25 25)', 
+      secondary: 'oklch(0.1 0.01 240)', 
+      accent: 'oklch(0.98 0.01 240)',
+      darkPrimary: 'oklch(0.6 0.25 25)', 
+      darkSecondary: 'oklch(0.3 0.01 240)', 
+      darkAccent: 'oklch(0.9 0.01 240)'
+    },
+    'CLE': {
+      primary: 'oklch(0.4 0.25 25)', 
+      secondary: 'oklch(0.25 0.2 260)', 
+      accent: 'oklch(0.8 0.15 80)',
+      darkPrimary: 'oklch(0.5 0.25 25)', 
+      darkSecondary: 'oklch(0.45 0.15 260)', 
+      darkAccent: 'oklch(0.85 0.15 80)'
+    },
+    'DET': {
+      primary: 'oklch(0.5 0.25 25)', 
+      secondary: 'oklch(0.4 0.2 260)', 
+      accent: 'oklch(0.7 0.02 240)',
+      darkPrimary: 'oklch(0.6 0.25 25)', 
+      darkSecondary: 'oklch(0.5 0.15 260)', 
+      darkAccent: 'oklch(0.8 0.02 240)'
+    },
+    'IND': {
+      primary: 'oklch(0.3 0.2 260)', 
+      secondary: 'oklch(0.8 0.15 80)', 
+      accent: 'oklch(0.7 0.02 240)',
+      darkPrimary: 'oklch(0.5 0.15 260)', 
+      darkSecondary: 'oklch(0.85 0.15 80)', 
+      darkAccent: 'oklch(0.8 0.02 240)'
+    },
+    'MIA': {
+      primary: 'oklch(0.4 0.25 25)', 
+      secondary: 'oklch(0.7 0.15 60)', 
+      accent: 'oklch(0.1 0.01 240)',
+      darkPrimary: 'oklch(0.5 0.25 25)', 
+      darkSecondary: 'oklch(0.75 0.15 60)', 
+      darkAccent: 'oklch(0.7 0.1 60)'
+    },
+    'MIL': {
+      primary: 'oklch(0.35 0.18 150)', 
+      secondary: 'oklch(0.9 0.05 80)', 
+      accent: 'oklch(0.5 0.2 220)',
+      darkPrimary: 'oklch(0.5 0.15 150)', 
+      darkSecondary: 'oklch(0.95 0.05 80)', 
+      darkAccent: 'oklch(0.65 0.15 220)'
+    },
+    'NYK': {
+      primary: 'oklch(0.5 0.2 220)', 
+      secondary: 'oklch(0.7 0.15 60)', 
+      accent: 'oklch(0.7 0.02 240)',
+      darkPrimary: 'oklch(0.6 0.15 220)', 
+      darkSecondary: 'oklch(0.75 0.15 60)', 
+      darkAccent: 'oklch(0.8 0.02 240)'
+    },
+    'ORL': {
+      primary: 'oklch(0.5 0.2 220)', 
+      secondary: 'oklch(0.8 0.02 240)', 
+      accent: 'oklch(0.1 0.01 240)',
+      darkPrimary: 'oklch(0.6 0.15 220)', 
+      darkSecondary: 'oklch(0.9 0.02 240)', 
+      darkAccent: 'oklch(0.7 0.1 220)'
+    },
+    'PHI': {
+      primary: 'oklch(0.5 0.2 220)', 
+      secondary: 'oklch(0.5 0.25 25)', 
+      accent: 'oklch(0.3 0.2 260)',
+      darkPrimary: 'oklch(0.6 0.15 220)', 
+      darkSecondary: 'oklch(0.6 0.25 25)', 
+      darkAccent: 'oklch(0.5 0.15 260)'
+    },
+    'TOR': {
+      primary: 'oklch(0.5 0.25 25)', 
+      secondary: 'oklch(0.1 0.01 240)', 
+      accent: 'oklch(0.7 0.02 240)',
+      darkPrimary: 'oklch(0.6 0.25 25)', 
+      darkSecondary: 'oklch(0.3 0.01 240)', 
+      darkAccent: 'oklch(0.8 0.02 240)'
+    },
+    'WAS': {
+      primary: 'oklch(0.3 0.2 260)', 
+      secondary: 'oklch(0.5 0.25 25)', 
+      accent: 'oklch(0.8 0.02 240)',
+      darkPrimary: 'oklch(0.5 0.15 260)', 
+      darkSecondary: 'oklch(0.6 0.25 25)', 
+      darkAccent: 'oklch(0.9 0.02 240)'
+    },
     
     // Western Conference
-    'DAL': {primary: '#00538C', secondary: '#002B5E', accent: '#B8C4CA'},
-    'DEN': {primary: '#0E2240', secondary: '#FEC524', accent: '#8B2131'},
-    'GSW': {primary: '#1D428A', secondary: '#FFC72C', accent: '#26282A'},
-    'HOU': {primary: '#CE1141', secondary: '#000000', accent: '#C4CED4'},
-    'LAC': {primary: '#C8102E', secondary: '#1D428A', accent: '#BEC0C2'},
-    'LAL': {primary: '#552583', secondary: '#FDB927', accent: '#000000'},
-    'MEM': {primary: '#5D76A9', secondary: '#12173F', accent: '#F5B112'},
-    'MIN': {primary: '#0C2340', secondary: '#236192', accent: '#78BE20'},
-    'NOP': {primary: '#0C2340', secondary: '#C8102E', accent: '#85714D'},
-    'OKC': {primary: '#007AC1', secondary: '#EF3B24', accent: '#002D62'},
-    'PHX': {primary: '#1D1160', secondary: '#E56020', accent: '#000000'},
-    'POR': {primary: '#E03A3E', secondary: '#000000', accent: '#FFFFFF'},
-    'SAC': {primary: '#5A2D81', secondary: '#63727A', accent: '#000000'},
-    'SAS': {primary: '#C4CED4', secondary: '#000000', accent: '#EF426F'},
-    'UTA': {primary: '#002B5C', secondary: '#00471B', accent: '#F9A01B'},
+    'DAL': {
+      primary: 'oklch(0.45 0.2 220)', 
+      secondary: 'oklch(0.3 0.2 260)', 
+      accent: 'oklch(0.75 0.05 240)',
+      darkPrimary: 'oklch(0.6 0.15 220)', 
+      darkSecondary: 'oklch(0.5 0.15 260)', 
+      darkAccent: 'oklch(0.85 0.05 240)'
+    },
+    'DEN': {
+      primary: 'oklch(0.25 0.15 260)', 
+      secondary: 'oklch(0.8 0.15 80)', 
+      accent: 'oklch(0.4 0.25 25)',
+      darkPrimary: 'oklch(0.45 0.1 260)', 
+      darkSecondary: 'oklch(0.85 0.15 80)', 
+      darkAccent: 'oklch(0.5 0.25 25)'
+    },
+    'GSW': {
+      primary: 'oklch(0.45 0.2 240)', 
+      secondary: 'oklch(0.8 0.15 80)', 
+      accent: 'oklch(0.2 0.02 240)',
+      darkPrimary: 'oklch(0.6 0.15 240)', 
+      darkSecondary: 'oklch(0.85 0.15 80)', 
+      darkAccent: 'oklch(0.7 0.1 80)'
+    },
+    'HOU': {
+      primary: 'oklch(0.5 0.25 25)', 
+      secondary: 'oklch(0.1 0.01 240)', 
+      accent: 'oklch(0.8 0.02 240)',
+      darkPrimary: 'oklch(0.6 0.25 25)', 
+      darkSecondary: 'oklch(0.3 0.01 240)', 
+      darkAccent: 'oklch(0.9 0.02 240)'
+    },
+    'LAC': {
+      primary: 'oklch(0.5 0.25 25)', 
+      secondary: 'oklch(0.45 0.2 240)', 
+      accent: 'oklch(0.7 0.02 240)',
+      darkPrimary: 'oklch(0.6 0.25 25)', 
+      darkSecondary: 'oklch(0.6 0.15 240)', 
+      darkAccent: 'oklch(0.8 0.02 240)'
+    },
+    'LAL': {
+      primary: 'oklch(0.4 0.2 300)', 
+      secondary: 'oklch(0.75 0.15 80)', 
+      accent: 'oklch(0.1 0.01 240)',
+      darkPrimary: 'oklch(0.55 0.15 300)', 
+      darkSecondary: 'oklch(0.8 0.15 80)', 
+      darkAccent: 'oklch(0.7 0.1 80)'
+    },
+    'MEM': {
+      primary: 'oklch(0.6 0.1 260)', 
+      secondary: 'oklch(0.2 0.15 260)', 
+      accent: 'oklch(0.7 0.15 80)',
+      darkPrimary: 'oklch(0.7 0.1 260)', 
+      darkSecondary: 'oklch(0.4 0.1 260)', 
+      darkAccent: 'oklch(0.75 0.15 80)'
+    },
+    'MIN': {
+      primary: 'oklch(0.25 0.15 260)', 
+      secondary: 'oklch(0.45 0.2 220)', 
+      accent: 'oklch(0.6 0.15 140)',
+      darkPrimary: 'oklch(0.45 0.1 260)', 
+      darkSecondary: 'oklch(0.6 0.15 220)', 
+      darkAccent: 'oklch(0.7 0.15 140)'
+    },
+    'NOP': {
+      primary: 'oklch(0.25 0.15 260)', 
+      secondary: 'oklch(0.5 0.25 25)', 
+      accent: 'oklch(0.6 0.1 80)',
+      darkPrimary: 'oklch(0.45 0.1 260)', 
+      darkSecondary: 'oklch(0.6 0.25 25)', 
+      darkAccent: 'oklch(0.7 0.1 80)'
+    },
+    'OKC': {
+      primary: 'oklch(0.5 0.2 220)', 
+      secondary: 'oklch(0.5 0.25 25)', 
+      accent: 'oklch(0.3 0.2 260)',
+      darkPrimary: 'oklch(0.6 0.15 220)', 
+      darkSecondary: 'oklch(0.6 0.25 25)', 
+      darkAccent: 'oklch(0.5 0.15 260)'
+    },
+    'PHX': {
+      primary: 'oklch(0.3 0.2 280)', 
+      secondary: 'oklch(0.6 0.2 40)', 
+      accent: 'oklch(0.1 0.01 240)',
+      darkPrimary: 'oklch(0.5 0.15 280)', 
+      darkSecondary: 'oklch(0.7 0.2 40)', 
+      darkAccent: 'oklch(0.75 0.15 40)'
+    },
+    'POR': {
+      primary: 'oklch(0.5 0.25 25)', 
+      secondary: 'oklch(0.1 0.01 240)', 
+      accent: 'oklch(0.98 0.01 240)',
+      darkPrimary: 'oklch(0.6 0.25 25)', 
+      darkSecondary: 'oklch(0.3 0.01 240)', 
+      darkAccent: 'oklch(0.9 0.01 240)'
+    },
+    'SAC': {
+      primary: 'oklch(0.4 0.2 300)', 
+      secondary: 'oklch(0.6 0.05 240)', 
+      accent: 'oklch(0.1 0.01 240)',
+      darkPrimary: 'oklch(0.55 0.15 300)', 
+      darkSecondary: 'oklch(0.7 0.05 240)', 
+      darkAccent: 'oklch(0.7 0.1 300)'
+    },
+    'SAS': {
+      primary: 'oklch(0.8 0.02 240)', 
+      secondary: 'oklch(0.1 0.01 240)', 
+      accent: 'oklch(0.6 0.25 350)',
+      darkPrimary: 'oklch(0.9 0.02 240)', 
+      darkSecondary: 'oklch(0.3 0.01 240)', 
+      darkAccent: 'oklch(0.7 0.2 350)'
+    },
+    'UTA': {
+      primary: 'oklch(0.3 0.2 260)', 
+      secondary: 'oklch(0.35 0.18 150)', 
+      accent: 'oklch(0.7 0.15 60)',
+      darkPrimary: 'oklch(0.5 0.15 260)', 
+      darkSecondary: 'oklch(0.5 0.15 150)', 
+      darkAccent: 'oklch(0.75 0.15 60)'
+    },
     
     // Default fallback
-    'DEFAULT': {primary: '#17408B', secondary: '#C9082A', accent: '#17408B'},
+    'DEFAULT': {
+      primary: 'oklch(0.45 0.2 240)', 
+      secondary: 'oklch(0.5 0.25 25)', 
+      accent: 'oklch(0.45 0.2 240)',
+      darkPrimary: 'oklch(0.6 0.15 240)', 
+      darkSecondary: 'oklch(0.6 0.25 25)', 
+      darkAccent: 'oklch(0.6 0.15 240)'
+    },
+  };
+  
+  // Apply the dark mode adjustments to all colors
+  const team = colorMap[teamAbbr] || colorMap['DEFAULT'];
+  
+  // TypeScript needs reassurance that team exists
+  if (!team) {
+    return colorMap['DEFAULT']; // Fallback to default if somehow both lookups failed
   }
   
-  return colorMap[teamAbbr] || colorMap['DEFAULT']
+  // Return the team colors with adjusted dark mode variants
+  return {
+    ...team,
+    darkPrimary: adjustForDarkMode(team.darkPrimary),
+    darkSecondary: adjustForDarkMode(team.darkSecondary),
+    darkAccent: adjustForDarkMode(team.darkAccent)
+  };
 }
