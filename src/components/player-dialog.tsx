@@ -186,6 +186,7 @@ export default function PlayerDialog({
                 bgGradient={primaryColor}
                 darkBgGradient={darkPrimaryColor}
                 size="large"
+                useGradient={true}
               />
               <StatCard 
                 label="REB" 
@@ -220,7 +221,7 @@ export default function PlayerDialog({
                   percentage={parseFloat(fgPercentage)}
                   color={primaryColor}
                   darkColor={darkPrimaryColor}
-                  useGradient={false}
+                  useGradient={true}
                 />
                 <ShootingStatBar 
                   label="3PT" 
@@ -229,7 +230,7 @@ export default function PlayerDialog({
                   percentage={parseFloat(threePointPercentage)}
                   color={primaryColor}
                   darkColor={darkPrimaryColor}
-                  useGradient={false}
+                  useGradient={true}
                 />
                 <ShootingStatBar 
                   label="FT" 
@@ -238,7 +239,7 @@ export default function PlayerDialog({
                   percentage={parseFloat(ftPercentage)}
                   color={primaryColor}
                   darkColor={darkPrimaryColor}
-                  useGradient={false}
+                  useGradient={true}
                 />
               </div>
             </div>
@@ -301,7 +302,8 @@ function StatCard({
   subValue,
   bgGradient,
   darkBgGradient,
-  size = "normal"
+  size = "normal",
+  useGradient = false
 }: {
   label: string
   value: React.ReactNode
@@ -309,8 +311,18 @@ function StatCard({
   bgGradient?: string
   darkBgGradient?: string
   size?: "normal" | "large"
+  useGradient?: boolean
 }) {
   const hasBg = !!bgGradient
+  
+  // Create gradient variables for both light and dark modes
+  const lightGradient = hasBg && useGradient ? 
+    `linear-gradient(120deg, ${bgGradient} 0%, color-mix(in oklch, ${bgGradient}, white 25%) 100%)` : 
+    undefined;
+  
+  const darkGradient = hasBg && useGradient && darkBgGradient ? 
+    `linear-gradient(120deg, ${darkBgGradient} 0%, color-mix(in oklch, ${darkBgGradient}, white 35%) 100%)` : 
+    undefined;
   
   return (
     <div 
@@ -319,14 +331,22 @@ function StatCard({
         ${hasBg ? 'text-white' : 'bg-white dark:bg-neutral-800 dark:border dark:border-white/5 text-neutral-900 dark:text-white'}
       `}
       style={hasBg ? { 
-        backgroundColor: bgGradient,
-        '--dark-bg-gradient': darkBgGradient
+        background: useGradient && lightGradient ? lightGradient : bgGradient,
+        '--dark-bg-gradient': darkBgGradient,
+        '--dark-gradient': darkGradient
       } as React.CSSProperties : {}}
       data-has-dark-bg={hasBg && !!darkBgGradient ? 'true' : undefined}
+      data-use-gradient={useGradient ? 'true' : 'false'}
     >
       <style jsx>{`
+        /* For solid color in dark mode */
         [data-has-dark-bg="true"]:is(.dark [data-has-dark-bg="true"]) {
           background-color: var(--dark-bg-gradient);
+        }
+        
+        /* For gradient in dark mode */
+        [data-has-dark-bg="true"][data-use-gradient="true"]:is(.dark [data-has-dark-bg="true"][data-use-gradient="true"]) {
+          background: var(--dark-gradient) !important;
         }
       `}</style>
       <div className={`
@@ -367,6 +387,9 @@ function ShootingStatBar({
   darkColor: string
   useGradient?: boolean
 }) {
+  // Create gradient variables for both light and dark modes
+  const lightGradient = `linear-gradient(90deg, ${color} 0%, color-mix(in oklch, ${color}, white 20%) 100%)`;
+  
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-baseline mb-1">
@@ -375,19 +398,29 @@ function ShootingStatBar({
       </div>
       <div className="h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
         <div 
-          className="h-full rounded-full opacity-80 dark:border dark:border-white/15"
+          className="h-full rounded-full opacity-90"
           style={{ 
             width: `${percentage}%`, 
-            backgroundColor: color,
+            background: useGradient ? lightGradient : color,
             minWidth: made > 0 ? '4px' : '0',
-            '--dark-color': darkColor
+            '--dark-color': darkColor,
+            '--dark-gradient': `linear-gradient(90deg, ${darkColor} 0%, color-mix(in oklch, ${darkColor}, white 30%) 100%)`
           } as React.CSSProperties}
           data-dark-color="true"
+          data-use-gradient={useGradient ? "true" : "false"}
         />
       </div>
       <style jsx>{`
+        /* Apply dark mode gradient */
         [data-dark-color="true"]:is(.dark [data-dark-color="true"]) {
-          background-color: var(--dark-color) !important;
+          background: var(--dark-gradient) !important;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+        
+        /* For non-gradient mode in dark mode, use solid color */
+        [data-dark-color="true"][data-use-gradient="false"]:is(.dark [data-dark-color="true"][data-use-gradient="false"]) {
+          background: var(--dark-color) !important;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
         }
       `}</style>
       <div className="text-xs text-right mt-1 text-neutral-500 dark:text-neutral-400">
@@ -564,14 +597,11 @@ function getTeamColors(teamAbbr: string) {
     // For dark purples and blues (hue between 240-300), reduce chroma and increase lightness
     if (hue >= 240 && hue <= 300) {
       // Desaturate and lighten dark purples and blues
-      const newLightness = Math.min(lightness + 0.2, 0.9);
-      const newChroma = Math.max(chroma - 0.05, 0.1);
-      return `oklch(${newLightness} ${newChroma} ${hue})`;
+      return `oklch(${Math.min(lightness + 0.2, 0.9)} ${Math.max(chroma - 0.05, 0.1)} ${hue})`;
     }
     
     // For other colors, just increase lightness slightly
-    const newLightness = Math.min(lightness + 0.1, 0.9);
-    return `oklch(${newLightness} ${chroma} ${hue})`;
+    return `oklch(${Math.min(lightness + 0.1, 0.9)} ${chroma} ${hue})`;
   };
 
   const colorMap: Record<string, {
@@ -837,19 +867,17 @@ function getTeamColors(teamAbbr: string) {
     },
   };
   
-  // Apply the dark mode adjustments to all colors
+  // Get team colors with fallback to DEFAULT
   const team = colorMap[teamAbbr] || colorMap['DEFAULT'];
   
-  // TypeScript needs reassurance that team exists
-  if (!team) {
-    return colorMap['DEFAULT']; // Fallback to default if somehow both lookups failed
-  }
+  // TypeScript needs reassurance about the type
+  const safeTeam = team as NonNullable<typeof team>;
   
   // Return the team colors with adjusted dark mode variants
   return {
-    ...team,
-    darkPrimary: adjustForDarkMode(team.darkPrimary),
-    darkSecondary: adjustForDarkMode(team.darkSecondary),
-    darkAccent: adjustForDarkMode(team.darkAccent)
+    ...safeTeam,
+    darkPrimary: adjustForDarkMode(safeTeam.darkPrimary),
+    darkSecondary: adjustForDarkMode(safeTeam.darkSecondary),
+    darkAccent: adjustForDarkMode(safeTeam.darkAccent)
   };
 }
