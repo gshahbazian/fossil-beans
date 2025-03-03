@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
+import { formatPercentage } from '@/lib/format-percentage'
 
 export default function StatsTable({
   stats,
@@ -81,11 +82,6 @@ function NumberCell({ children }: { children: React.ReactNode }) {
   return <TableCell className="text-right font-mono">{children}</TableCell>
 }
 
-const decimalFormat = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})
-
 function PercentageValue({
   numerator,
   denominator,
@@ -97,7 +93,7 @@ function PercentageValue({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span>{decimalFormat.format((numerator / denominator) * 100)}</span>
+          <span>{formatPercentage(numerator, denominator)}</span>
         </TooltipTrigger>
         <TooltipContent>
           <span>

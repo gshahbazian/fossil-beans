@@ -8,6 +8,7 @@ import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import Image from 'next/image'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
+import { formatPercentage } from '@/lib/format-percentage'
 
 export default function PlayerDialog({
   isOpen,
@@ -28,33 +29,6 @@ export default function PlayerDialog({
   const trimmedMinutes = trimIntervalToMinsSecs(
     playerStat.minutesPlayed ?? '00:00'
   )
-
-  // Calculate field goal and free throw percentages for display with one decimal place
-  const fgPercentage =
-    playerStat.fieldGoalsAttempted && playerStat.fieldGoalsAttempted > 0
-      ? (
-          ((playerStat.fieldGoalsMade || 0) / playerStat.fieldGoalsAttempted) *
-          100
-        ).toFixed(1)
-      : '0.0'
-
-  const ftPercentage =
-    playerStat.freeThrowsAttempted && playerStat.freeThrowsAttempted > 0
-      ? (
-          ((playerStat.freeThrowsMade || 0) / playerStat.freeThrowsAttempted) *
-          100
-        ).toFixed(1)
-      : '0.0'
-
-  // Calculate 3-point percentage with one decimal place
-  const threePointPercentage =
-    playerStat.threePointersAttempted && playerStat.threePointersAttempted > 0
-      ? (
-          ((playerStat.threePointersMade || 0) /
-            playerStat.threePointersAttempted) *
-          100
-        ).toFixed(1)
-      : '0.0'
 
   const playerTeam =
     gameWithTeams.homeTeam.teamId === playerStat.teamId
@@ -230,7 +204,6 @@ export default function PlayerDialog({
                   label="FG"
                   made={playerStat.fieldGoalsMade || 0}
                   attempted={playerStat.fieldGoalsAttempted || 0}
-                  percentage={parseFloat(fgPercentage)}
                   color={primaryColor}
                   darkColor={darkPrimaryColor}
                   useGradient={true}
@@ -239,7 +212,6 @@ export default function PlayerDialog({
                   label="3PT"
                   made={playerStat.threePointersMade || 0}
                   attempted={playerStat.threePointersAttempted || 0}
-                  percentage={parseFloat(threePointPercentage)}
                   color={primaryColor}
                   darkColor={darkPrimaryColor}
                   useGradient={true}
@@ -248,7 +220,6 @@ export default function PlayerDialog({
                   label="FT"
                   made={playerStat.freeThrowsMade || 0}
                   attempted={playerStat.freeThrowsAttempted || 0}
-                  percentage={parseFloat(ftPercentage)}
                   color={primaryColor}
                   darkColor={darkPrimaryColor}
                   useGradient={true}
@@ -352,7 +323,6 @@ function ShootingStatBar({
   label,
   made,
   attempted,
-  percentage,
   color,
   darkColor,
   useGradient = false,
@@ -360,7 +330,6 @@ function ShootingStatBar({
   label: string
   made: number
   attempted: number
-  percentage: number
   color: string
   darkColor: string
   useGradient?: boolean
@@ -374,16 +343,21 @@ function ShootingStatBar({
         <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
           {label}
         </span>
-        <span className="font-mono text-sm font-bold">
-          {percentage.toFixed(1)}%
-        </span>
+
+        {attempted > 0 ? (
+          <span className="font-mono text-sm font-bold">
+            {formatPercentage(made, attempted)}%
+          </span>
+        ) : (
+          <span className="font-mono text-sm font-bold">-</span>
+        )}
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
         <div
           className="h-full rounded-full opacity-90"
           style={
             {
-              width: `${percentage}%`,
+              width: `${attempted > 0 ? (made / attempted) * 100 : 0}%`,
               background: useGradient ? lightGradient : color,
               minWidth: made > 0 ? '4px' : '0',
               '--dark-color': darkColor,
