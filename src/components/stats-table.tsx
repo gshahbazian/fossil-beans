@@ -112,8 +112,6 @@ function StatRow({
   stat: GamePlayerStat
   onPlayerClicked: (stat: GamePlayerStat) => void
 }) {
-  const trimmedMinutes = trimIntervalToMinsSecs(stat.minutesPlayed ?? '00:00')
-
   return (
     <TableRow
       key={stat.player.playerId}
@@ -128,7 +126,9 @@ function StatRow({
           {stat.player.playerName}
         </span>
       </TableCell>
-      <NumberCell>{trimmedMinutes}</NumberCell>
+      <NumberCell>
+        {trimIntervalToMinsSecs(stat.minutesPlayed ?? '00:00')}
+      </NumberCell>
       <NumberCell>{stat.points}</NumberCell>
       <NumberCell>{stat.threePointersMade}</NumberCell>
       <NumberCell>{stat.rebounds}</NumberCell>

@@ -9,6 +9,14 @@ import Image from 'next/image'
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 import { formatPercentage } from '@/lib/format-percentage'
+import { getTeamColors } from '@/lib/team-colors'
+import { cn } from '@/lib/utils'
+
+declare module 'react' {
+  interface CSSProperties {
+    [key: `--${string}`]: string | number
+  }
+}
 
 export default function PlayerDialog({
   isOpen,
@@ -26,35 +34,12 @@ export default function PlayerDialog({
     onClose()
   }
 
-  const trimmedMinutes = trimIntervalToMinsSecs(
-    playerStat.minutesPlayed ?? '00:00'
-  )
-
   const playerTeam =
     gameWithTeams.homeTeam.teamId === playerStat.teamId
       ? gameWithTeams.homeTeam
       : gameWithTeams.awayTeam
 
-  // Get team colors with P3 color fallback
   const teamColors = getTeamColors(playerTeam.abbreviation)
-  const primaryColor = teamColors?.primary || 'oklch(0.5 0.2 240)'
-  const secondaryColor = teamColors?.secondary || 'oklch(0.6 0.25 30)'
-  const darkPrimaryColor = teamColors?.darkPrimary || 'oklch(0.55 0.2 240)'
-  const darkSecondaryColor = teamColors?.darkSecondary || 'oklch(0.65 0.25 30)'
-
-  // Create gradient for header with dark mode variation
-  const headerGradient = `linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)`
-  const headerStyle = {
-    background: headerGradient,
-    '--primary-color': primaryColor,
-    '--secondary-color': secondaryColor,
-  } as React.CSSProperties
-
-  // Add dark mode CSS variables
-  // const darkModeStyle = {
-  //   '--primary-color': darkPrimaryColor,
-  //   '--secondary-color': darkSecondaryColor,
-  // } as React.CSSProperties
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -66,19 +51,17 @@ export default function PlayerDialog({
           </DialogDescription>
         </VisuallyHidden.Root>
 
-        <div className="flex flex-col">
+        <div
+          className="flex flex-col"
+          style={{
+            '--team-primary': teamColors.primary,
+            '--team-secondary': teamColors.secondary,
+            '--team-dark-primary': teamColors.darkPrimary,
+            '--team-dark-secondary': teamColors.darkSecondary,
+          }}
+        >
           {/* Header with player info */}
-          <div
-            className="dark:[&>*]:dark-mode-colors relative h-56 overflow-hidden"
-            style={headerStyle}
-          >
-            <style jsx>{`
-              .dark-mode-colors {
-                --primary-color: ${darkPrimaryColor};
-                --secondary-color: ${darkSecondaryColor};
-              }
-            `}</style>
-
+          <div className="team-splash relative h-56 overflow-hidden">
             {/* Team logo watermark */}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden opacity-10">
               <Image
@@ -170,10 +153,8 @@ export default function PlayerDialog({
               <StatCard
                 label="PTS"
                 value={playerStat.points || 0}
-                bgGradient={primaryColor}
-                darkBgGradient={darkPrimaryColor}
                 size="large"
-                useGradient={true}
+                className="stat-card-splash text-white [&_[data-slot='label']]:text-white/70"
               />
               <StatCard
                 label="REB"
@@ -188,7 +169,12 @@ export default function PlayerDialog({
             </div>
             {/* Secondary stats */}
             <div className="mb-3 grid grid-cols-4 gap-3">
-              <StatCard label="MIN" value={trimmedMinutes} />
+              <StatCard
+                label="MIN"
+                value={trimIntervalToMinsSecs(
+                  playerStat.minutesPlayed ?? '00:00'
+                )}
+              />
               <StatCard label="STL" value={playerStat.steals || 0} />
               <StatCard label="BLK" value={playerStat.blocks || 0} />
               <StatCard label="TO" value={playerStat.turnovers || 0} />
@@ -204,25 +190,16 @@ export default function PlayerDialog({
                   label="FG"
                   made={playerStat.fieldGoalsMade || 0}
                   attempted={playerStat.fieldGoalsAttempted || 0}
-                  color={primaryColor}
-                  darkColor={darkPrimaryColor}
-                  useGradient={true}
                 />
                 <ShootingStatBar
                   label="3PT"
                   made={playerStat.threePointersMade || 0}
                   attempted={playerStat.threePointersAttempted || 0}
-                  color={primaryColor}
-                  darkColor={darkPrimaryColor}
-                  useGradient={true}
                 />
                 <ShootingStatBar
                   label="FT"
                   made={playerStat.freeThrowsMade || 0}
                   attempted={playerStat.freeThrowsAttempted || 0}
-                  color={primaryColor}
-                  darkColor={darkPrimaryColor}
-                  useGradient={true}
                 />
               </div>
             </div>
@@ -237,79 +214,33 @@ export default function PlayerDialog({
 function StatCard({
   label,
   value,
-  subValue,
-  bgGradient,
-  darkBgGradient,
   size = 'normal',
-  useGradient = false,
+  className,
 }: {
   label: string
   value: React.ReactNode
-  subValue?: string | null
-  bgGradient?: string
-  darkBgGradient?: string
   size?: 'normal' | 'large'
-  useGradient?: boolean
+  className?: string
 }) {
-  const hasBg = !!bgGradient
-
-  // Create gradient variables for both light and dark modes
-  const lightGradient =
-    hasBg && useGradient
-      ? `linear-gradient(120deg, ${bgGradient} 0%, color-mix(in oklch, ${bgGradient}, white 25%) 100%)`
-      : undefined
-
-  const darkGradient =
-    hasBg && useGradient && darkBgGradient
-      ? `linear-gradient(120deg, ${darkBgGradient} 0%, color-mix(in oklch, ${darkBgGradient}, white 35%) 100%)`
-      : undefined
-
   return (
     <div
-      className={`overflow-hidden rounded-xl shadow-sm ${hasBg ? 'text-white' : 'bg-white text-neutral-900 dark:border dark:border-white/5 dark:bg-neutral-800 dark:text-white'} `}
-      style={
-        hasBg
-          ? ({
-              background:
-                useGradient && lightGradient ? lightGradient : bgGradient,
-              '--dark-bg-gradient': darkBgGradient,
-              '--dark-gradient': darkGradient,
-            } as React.CSSProperties)
-          : {}
-      }
-      data-has-dark-bg={hasBg && !!darkBgGradient ? 'true' : undefined}
-      data-use-gradient={useGradient ? 'true' : 'false'}
+      className={cn(
+        'overflow-hidden rounded-xl bg-white text-neutral-900 shadow-sm dark:border dark:border-white/5 dark:bg-neutral-800 dark:text-white',
+        className
+      )}
     >
-      <style jsx>{`
-        /* For solid color in dark mode */
-        [data-has-dark-bg='true']:is(.dark [data-has-dark-bg='true']) {
-          background-color: var(--dark-bg-gradient);
-        }
-
-        /* For gradient in dark mode */
-        [data-has-dark-bg='true'][data-use-gradient='true']:is(
-            .dark [data-has-dark-bg='true'][data-use-gradient='true']
-          ) {
-          background: var(--dark-gradient) !important;
-        }
-      `}</style>
-      <div
-        className={`flex flex-col items-center justify-center p-3 ${hasBg ? 'bg-black/5' : ''} `}
-      >
+      <div className="flex flex-col items-center justify-center bg-black/5 p-3">
         <span
-          className={`font-mono font-bold ${size === 'large' ? 'text-3xl' : 'text-xl'}`}
+          className={cn(
+            'font-mono font-bold',
+            size === 'large' ? 'text-3xl' : 'text-xl'
+          )}
         >
           {value}
         </span>
-        {subValue && (
-          <span
-            className={`mt-0.5 text-xs ${hasBg ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}
-          >
-            {subValue}
-          </span>
-        )}
         <span
-          className={`mt-1 text-xs font-medium ${hasBg ? 'text-white/70' : 'text-neutral-500 dark:text-neutral-400'}`}
+          className="mt-1 text-xs font-medium text-neutral-500 dark:text-neutral-400"
+          data-slot="label"
         >
           {label}
         </span>
@@ -323,20 +254,11 @@ function ShootingStatBar({
   label,
   made,
   attempted,
-  color,
-  darkColor,
-  useGradient = false,
 }: {
   label: string
   made: number
   attempted: number
-  color: string
-  darkColor: string
-  useGradient?: boolean
 }) {
-  // Create gradient variables for both light and dark modes
-  const lightGradient = `linear-gradient(90deg, ${color} 0%, color-mix(in oklch, ${color}, white 20%) 100%)`
-
   return (
     <div className="flex flex-col">
       <div className="mb-1 flex items-baseline justify-between">
@@ -354,35 +276,13 @@ function ShootingStatBar({
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
         <div
-          className="h-full rounded-full opacity-90"
-          style={
-            {
-              width: `${attempted > 0 ? (made / attempted) * 100 : 0}%`,
-              background: useGradient ? lightGradient : color,
-              minWidth: made > 0 ? '4px' : '0',
-              '--dark-color': darkColor,
-              '--dark-gradient': `linear-gradient(90deg, ${darkColor} 0%, color-mix(in oklch, ${darkColor}, white 30%) 100%)`,
-            } as React.CSSProperties
-          }
-          data-dark-color="true"
-          data-use-gradient={useGradient ? 'true' : 'false'}
+          className="shooting-stat-bar h-full rounded-full opacity-90"
+          style={{
+            width: `${attempted > 0 ? (made / attempted) * 100 : 0}%`,
+            minWidth: made > 0 ? '4px' : '0',
+          }}
         />
       </div>
-      <style jsx>{`
-        /* Apply dark mode gradient */
-        [data-dark-color='true']:is(.dark [data-dark-color='true']) {
-          background: var(--dark-gradient) !important;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
-        }
-
-        /* For non-gradient mode in dark mode, use solid color */
-        [data-dark-color='true'][data-use-gradient='false']:is(
-            .dark [data-dark-color='true'][data-use-gradient='false']
-          ) {
-          background: var(--dark-color) !important;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
-        }
-      `}</style>
       <div className="mt-1 text-right text-xs text-neutral-500 dark:text-neutral-400">
         {made}/{attempted}
       </div>
@@ -474,309 +374,4 @@ function TeamLogo({
       />
     </div>
   )
-}
-
-// Team colors using OKLCH color space for better P3 display
-function getTeamColors(teamAbbr: string) {
-  // Helper function to create dark mode variants with appropriate adjustments
-  const adjustForDarkMode = (color: string): string => {
-    // Parse the OKLCH color to get components
-    const match = color.match(/oklch\(([0-9.]+) ([0-9.]+) ([0-9.]+)\)/)
-    if (!match || match.length < 4) return color
-
-    const lightness = Number(match[1])
-    const chroma = Number(match[2])
-    const hue = Number(match[3])
-
-    if (isNaN(lightness) || isNaN(chroma) || isNaN(hue)) return color
-
-    // For dark purples and blues (hue between 240-300), reduce chroma and increase lightness
-    if (hue >= 240 && hue <= 300) {
-      // Desaturate and lighten dark purples and blues
-      return `oklch(${Math.min(lightness + 0.2, 0.9)} ${Math.max(chroma - 0.05, 0.1)} ${hue})`
-    }
-
-    // For other colors, just increase lightness slightly
-    return `oklch(${Math.min(lightness + 0.1, 0.9)} ${chroma} ${hue})`
-  }
-
-  const colorMap: Record<
-    string,
-    {
-      primary: string
-      secondary: string
-      accent: string
-      darkPrimary: string
-      darkSecondary: string
-      darkAccent: string
-    }
-  > = {
-    // Eastern Conference
-    ATL: {
-      primary: 'oklch(0.55 0.25 30)',
-      secondary: 'oklch(0.8 0.15 120)',
-      accent: 'oklch(0.2 0.02 240)',
-      darkPrimary: 'oklch(0.65 0.25 30)',
-      darkSecondary: 'oklch(0.85 0.15 120)',
-      darkAccent: 'oklch(0.7 0.1 30)',
-    },
-    BOS: {
-      primary: 'oklch(0.45 0.18 150)',
-      secondary: 'oklch(0.7 0.1 80)',
-      accent: 'oklch(0.4 0.2 30)',
-      darkPrimary: 'oklch(0.6 0.15 150)',
-      darkSecondary: 'oklch(0.75 0.1 80)',
-      darkAccent: 'oklch(0.65 0.2 30)',
-    },
-    BKN: {
-      primary: 'oklch(0.1 0.01 240)',
-      secondary: 'oklch(0.98 0.01 240)',
-      accent: 'oklch(0.6 0.02 240)',
-      darkPrimary: 'oklch(0.3 0.01 240)',
-      darkSecondary: 'oklch(0.9 0.01 240)',
-      darkAccent: 'oklch(0.8 0.05 240)',
-    },
-    CHA: {
-      primary: 'oklch(0.3 0.2 280)',
-      secondary: 'oklch(0.5 0.18 200)',
-      accent: 'oklch(0.7 0.02 240)',
-      darkPrimary: 'oklch(0.5 0.15 280)',
-      darkSecondary: 'oklch(0.6 0.15 200)',
-      darkAccent: 'oklch(0.8 0.02 240)',
-    },
-    CHI: {
-      primary: 'oklch(0.5 0.25 25)',
-      secondary: 'oklch(0.1 0.01 240)',
-      accent: 'oklch(0.98 0.01 240)',
-      darkPrimary: 'oklch(0.6 0.25 25)',
-      darkSecondary: 'oklch(0.3 0.01 240)',
-      darkAccent: 'oklch(0.9 0.01 240)',
-    },
-    CLE: {
-      primary: 'oklch(0.4 0.25 25)',
-      secondary: 'oklch(0.25 0.2 260)',
-      accent: 'oklch(0.8 0.15 80)',
-      darkPrimary: 'oklch(0.5 0.25 25)',
-      darkSecondary: 'oklch(0.45 0.15 260)',
-      darkAccent: 'oklch(0.85 0.15 80)',
-    },
-    DET: {
-      primary: 'oklch(0.5 0.25 25)',
-      secondary: 'oklch(0.4 0.2 260)',
-      accent: 'oklch(0.7 0.02 240)',
-      darkPrimary: 'oklch(0.6 0.25 25)',
-      darkSecondary: 'oklch(0.5 0.15 260)',
-      darkAccent: 'oklch(0.8 0.02 240)',
-    },
-    IND: {
-      primary: 'oklch(0.3 0.2 260)',
-      secondary: 'oklch(0.8 0.15 80)',
-      accent: 'oklch(0.7 0.02 240)',
-      darkPrimary: 'oklch(0.5 0.15 260)',
-      darkSecondary: 'oklch(0.85 0.15 80)',
-      darkAccent: 'oklch(0.8 0.02 240)',
-    },
-    MIA: {
-      primary: 'oklch(0.4 0.25 25)',
-      secondary: 'oklch(0.7 0.15 60)',
-      accent: 'oklch(0.1 0.01 240)',
-      darkPrimary: 'oklch(0.5 0.25 25)',
-      darkSecondary: 'oklch(0.75 0.15 60)',
-      darkAccent: 'oklch(0.7 0.1 60)',
-    },
-    MIL: {
-      primary: 'oklch(0.35 0.18 150)',
-      secondary: 'oklch(0.9 0.05 80)',
-      accent: 'oklch(0.5 0.2 220)',
-      darkPrimary: 'oklch(0.5 0.15 150)',
-      darkSecondary: 'oklch(0.95 0.05 80)',
-      darkAccent: 'oklch(0.65 0.15 220)',
-    },
-    NYK: {
-      primary: 'oklch(0.5 0.2 220)',
-      secondary: 'oklch(0.7 0.15 60)',
-      accent: 'oklch(0.7 0.02 240)',
-      darkPrimary: 'oklch(0.6 0.15 220)',
-      darkSecondary: 'oklch(0.75 0.15 60)',
-      darkAccent: 'oklch(0.8 0.02 240)',
-    },
-    ORL: {
-      primary: 'oklch(0.5 0.2 220)',
-      secondary: 'oklch(0.8 0.02 240)',
-      accent: 'oklch(0.1 0.01 240)',
-      darkPrimary: 'oklch(0.6 0.15 220)',
-      darkSecondary: 'oklch(0.9 0.02 240)',
-      darkAccent: 'oklch(0.7 0.1 220)',
-    },
-    PHI: {
-      primary: 'oklch(0.5 0.2 220)',
-      secondary: 'oklch(0.5 0.25 25)',
-      accent: 'oklch(0.3 0.2 260)',
-      darkPrimary: 'oklch(0.6 0.15 220)',
-      darkSecondary: 'oklch(0.6 0.25 25)',
-      darkAccent: 'oklch(0.5 0.15 260)',
-    },
-    TOR: {
-      primary: 'oklch(0.5 0.25 25)',
-      secondary: 'oklch(0.1 0.01 240)',
-      accent: 'oklch(0.7 0.02 240)',
-      darkPrimary: 'oklch(0.6 0.25 25)',
-      darkSecondary: 'oklch(0.3 0.01 240)',
-      darkAccent: 'oklch(0.8 0.02 240)',
-    },
-    WAS: {
-      primary: 'oklch(0.3 0.2 260)',
-      secondary: 'oklch(0.5 0.25 25)',
-      accent: 'oklch(0.8 0.02 240)',
-      darkPrimary: 'oklch(0.5 0.15 260)',
-      darkSecondary: 'oklch(0.6 0.25 25)',
-      darkAccent: 'oklch(0.9 0.02 240)',
-    },
-
-    // Western Conference
-    DAL: {
-      primary: 'oklch(0.45 0.2 220)',
-      secondary: 'oklch(0.3 0.2 260)',
-      accent: 'oklch(0.75 0.05 240)',
-      darkPrimary: 'oklch(0.6 0.15 220)',
-      darkSecondary: 'oklch(0.5 0.15 260)',
-      darkAccent: 'oklch(0.85 0.05 240)',
-    },
-    DEN: {
-      primary: 'oklch(0.25 0.15 260)',
-      secondary: 'oklch(0.8 0.15 80)',
-      accent: 'oklch(0.4 0.25 25)',
-      darkPrimary: 'oklch(0.45 0.1 260)',
-      darkSecondary: 'oklch(0.85 0.15 80)',
-      darkAccent: 'oklch(0.5 0.25 25)',
-    },
-    GSW: {
-      primary: 'oklch(0.45 0.2 240)',
-      secondary: 'oklch(0.8 0.15 80)',
-      accent: 'oklch(0.2 0.02 240)',
-      darkPrimary: 'oklch(0.6 0.15 240)',
-      darkSecondary: 'oklch(0.85 0.15 80)',
-      darkAccent: 'oklch(0.7 0.1 80)',
-    },
-    HOU: {
-      primary: 'oklch(0.5 0.25 25)',
-      secondary: 'oklch(0.1 0.01 240)',
-      accent: 'oklch(0.8 0.02 240)',
-      darkPrimary: 'oklch(0.6 0.25 25)',
-      darkSecondary: 'oklch(0.3 0.01 240)',
-      darkAccent: 'oklch(0.9 0.02 240)',
-    },
-    LAC: {
-      primary: 'oklch(0.5 0.25 25)',
-      secondary: 'oklch(0.45 0.2 240)',
-      accent: 'oklch(0.7 0.02 240)',
-      darkPrimary: 'oklch(0.6 0.25 25)',
-      darkSecondary: 'oklch(0.6 0.15 240)',
-      darkAccent: 'oklch(0.8 0.02 240)',
-    },
-    LAL: {
-      primary: 'oklch(0.4 0.2 300)',
-      secondary: 'oklch(0.75 0.15 80)',
-      accent: 'oklch(0.1 0.01 240)',
-      darkPrimary: 'oklch(0.55 0.15 300)',
-      darkSecondary: 'oklch(0.8 0.15 80)',
-      darkAccent: 'oklch(0.7 0.1 80)',
-    },
-    MEM: {
-      primary: 'oklch(0.6 0.1 260)',
-      secondary: 'oklch(0.2 0.15 260)',
-      accent: 'oklch(0.7 0.15 80)',
-      darkPrimary: 'oklch(0.7 0.1 260)',
-      darkSecondary: 'oklch(0.4 0.1 260)',
-      darkAccent: 'oklch(0.75 0.15 80)',
-    },
-    MIN: {
-      primary: 'oklch(0.25 0.15 260)',
-      secondary: 'oklch(0.45 0.2 220)',
-      accent: 'oklch(0.6 0.15 140)',
-      darkPrimary: 'oklch(0.45 0.1 260)',
-      darkSecondary: 'oklch(0.6 0.15 220)',
-      darkAccent: 'oklch(0.7 0.15 140)',
-    },
-    NOP: {
-      primary: 'oklch(0.25 0.15 260)',
-      secondary: 'oklch(0.5 0.25 25)',
-      accent: 'oklch(0.6 0.1 80)',
-      darkPrimary: 'oklch(0.45 0.1 260)',
-      darkSecondary: 'oklch(0.6 0.25 25)',
-      darkAccent: 'oklch(0.7 0.1 80)',
-    },
-    OKC: {
-      primary: 'oklch(0.5 0.2 220)',
-      secondary: 'oklch(0.5 0.25 25)',
-      accent: 'oklch(0.3 0.2 260)',
-      darkPrimary: 'oklch(0.6 0.15 220)',
-      darkSecondary: 'oklch(0.6 0.25 25)',
-      darkAccent: 'oklch(0.5 0.15 260)',
-    },
-    PHX: {
-      primary: 'oklch(0.3 0.2 280)',
-      secondary: 'oklch(0.6 0.2 40)',
-      accent: 'oklch(0.1 0.01 240)',
-      darkPrimary: 'oklch(0.5 0.15 280)',
-      darkSecondary: 'oklch(0.7 0.2 40)',
-      darkAccent: 'oklch(0.75 0.15 40)',
-    },
-    POR: {
-      primary: 'oklch(0.5 0.25 25)',
-      secondary: 'oklch(0.1 0.01 240)',
-      accent: 'oklch(0.98 0.01 240)',
-      darkPrimary: 'oklch(0.6 0.25 25)',
-      darkSecondary: 'oklch(0.3 0.01 240)',
-      darkAccent: 'oklch(0.9 0.01 240)',
-    },
-    SAC: {
-      primary: 'oklch(0.4 0.2 300)',
-      secondary: 'oklch(0.6 0.05 240)',
-      accent: 'oklch(0.1 0.01 240)',
-      darkPrimary: 'oklch(0.55 0.15 300)',
-      darkSecondary: 'oklch(0.7 0.05 240)',
-      darkAccent: 'oklch(0.7 0.1 300)',
-    },
-    SAS: {
-      primary: 'oklch(0.8 0.02 240)',
-      secondary: 'oklch(0.1 0.01 240)',
-      accent: 'oklch(0.6 0.25 350)',
-      darkPrimary: 'oklch(0.9 0.02 240)',
-      darkSecondary: 'oklch(0.3 0.01 240)',
-      darkAccent: 'oklch(0.7 0.2 350)',
-    },
-    UTA: {
-      primary: 'oklch(0.3 0.2 260)',
-      secondary: 'oklch(0.35 0.18 150)',
-      accent: 'oklch(0.7 0.15 60)',
-      darkPrimary: 'oklch(0.5 0.15 260)',
-      darkSecondary: 'oklch(0.5 0.15 150)',
-      darkAccent: 'oklch(0.75 0.15 60)',
-    },
-
-    // Default fallback
-    DEFAULT: {
-      primary: 'oklch(0.45 0.2 240)',
-      secondary: 'oklch(0.5 0.25 25)',
-      accent: 'oklch(0.45 0.2 240)',
-      darkPrimary: 'oklch(0.6 0.15 240)',
-      darkSecondary: 'oklch(0.6 0.25 25)',
-      darkAccent: 'oklch(0.6 0.15 240)',
-    },
-  }
-
-  // Get team colors with fallback to DEFAULT
-  const team = colorMap[teamAbbr] || colorMap['DEFAULT']
-
-  // TypeScript needs reassurance about the type
-  const safeTeam = team as NonNullable<typeof team>
-
-  // Return the team colors with adjusted dark mode variants
-  return {
-    ...safeTeam,
-    darkPrimary: adjustForDarkMode(safeTeam.darkPrimary),
-    darkSecondary: adjustForDarkMode(safeTeam.darkSecondary),
-    darkAccent: adjustForDarkMode(safeTeam.darkAccent),
-  }
 }
