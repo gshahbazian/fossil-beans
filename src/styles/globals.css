@@ -3,8 +3,8 @@
 @plugin "tailwindcss-animate";
 
 @theme inline {
-  --font-sans: Inter, ui-sans-serif;
-  --font-mono: var(--font-ibm-plex-mono), ui-monospace;
+  --font-sans: Geist, ui-sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace;
 }
 
 :root {

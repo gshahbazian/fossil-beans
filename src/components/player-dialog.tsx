@@ -71,7 +71,7 @@ export default function PlayerDialog({
                 label="Pts"
                 value={playerStat.points ?? 0}
                 size="large"
-                className="stat-card-splash text-white [&_[data-slot='label']]:text-white/70"
+                className="stat-card-splash text-white [&_[data-slot='label']]:text-white/70 [&>div]:bg-black/5"
               />
               <StatCard
                 label="Reb"
@@ -97,10 +97,10 @@ export default function PlayerDialog({
               <StatCard label="TO" value={playerStat.turnovers ?? 0} />
             </div>
 
-            <div className="rounded-xl bg-white p-4 shadow-sm dark:border dark:border-white/5 dark:bg-neutral-800">
-              <h3 className="mb-3 text-xs font-bold text-neutral-500 uppercase dark:text-neutral-400">
+            <div className="flex flex-col gap-3 rounded-xl bg-white p-4 shadow-sm dark:border dark:border-white/5 dark:bg-neutral-800">
+              <span className="text-xs font-bold text-neutral-500 uppercase dark:text-neutral-400">
                 Shooting
-              </h3>
+              </span>
               <div className="grid grid-cols-3 gap-3">
                 <ShootingStatBar
                   label="Fg"
