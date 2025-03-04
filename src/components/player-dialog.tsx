@@ -71,7 +71,7 @@ export default function PlayerDialog({
                 label="Pts"
                 value={playerStat.points ?? 0}
                 size="large"
-                className="stat-card-splash text-white [&_[data-slot='label']]:text-white/70 [&>div]:bg-black/5"
+                className="stat-card-splash text-white dark:border-0 dark:outline-1 dark:-outline-offset-1 dark:outline-white/20 [&_[data-slot='label']]:text-white/70 [&>div]:bg-black/5"
               />
               <StatCard
                 label="Reb"
@@ -217,7 +217,7 @@ function StatCard({
         className
       )}
     >
-      <div className="flex flex-col items-center justify-center p-3">
+      <div className="flex h-full w-full flex-col items-center justify-center p-3">
         <span
           className={cn(
             'font-mono font-bold',
