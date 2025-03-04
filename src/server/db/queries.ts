@@ -3,30 +3,34 @@ import { playerStats, games } from '@/server/db/schema'
 import { eq, desc, sql, asc, and } from 'drizzle-orm'
 
 export async function getPSTTimeOfLatestGame() {
-  const latestGame = await db
-    .select({
-      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`,
-    })
-    .from(games)
-    .orderBy(desc(games.gameTime))
-    .limit(1)
+  const latestGame = await db.query.games.findFirst({
+    extras: {
+      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`.as(
+        'pstTime'
+      ),
+    },
+    columns: {},
+    orderBy: desc(games.gameTime),
+  })
 
-  if (!latestGame[0]) return undefined
-  return latestGame[0].pstTime
+  if (!latestGame) return undefined
+  return latestGame.pstTime
 }
 
 export async function getPSTTimeOfLatestGameBefore(date: string) {
-  const latestGame = await db
-    .select({
-      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`,
-    })
-    .from(games)
-    .where(sql`(game_time AT TIME ZONE 'America/Los_Angeles')::date < ${date}`)
-    .orderBy(desc(games.gameTime))
-    .limit(1)
+  const latestGame = await db.query.games.findFirst({
+    where: sql`(game_time AT TIME ZONE 'America/Los_Angeles')::date < ${date}`,
+    extras: {
+      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`.as(
+        'pstTime'
+      ),
+    },
+    columns: {},
+    orderBy: desc(games.gameTime),
+  })
 
-  if (!latestGame[0]) return undefined
-  return latestGame[0].pstTime
+  if (!latestGame) return undefined
+  return latestGame.pstTime
 }
 
 export type GameWithTeams = Awaited<
