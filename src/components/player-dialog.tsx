@@ -176,22 +176,22 @@ function GameBar({ gameWithTeams }: { gameWithTeams: GameWithTeams }) {
       <div className="flex items-center gap-1 sm:gap-3">
         <TeamPill team={gameWithTeams.awayTeam} logoPosition="left" />
         <span className="font-mono text-sm font-bold">
-          {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
+          {gameWithTeams.awayScore}-{gameWithTeams.homeScore}
         </span>
         <TeamPill team={gameWithTeams.homeTeam} logoPosition="right" />
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
         <span className="text-xs text-neutral-400">
-          {gameWithTeams.game.gameTime.toLocaleString('en-US', {
+          {gameWithTeams.gameTime.toLocaleString('en-US', {
             day: 'numeric',
             month: 'short',
             timeZone: 'America/Los_Angeles',
           })}
         </span>
-        {gameWithTeams.game.gameStatus && (
+        {gameWithTeams.gameStatus && (
           <span className="rounded-full bg-neutral-800 px-3 py-1 text-[0.625rem] font-bold tracking-wider text-neutral-300 uppercase">
-            {gameWithTeams.game.gameStatus}
+            {gameWithTeams.gameStatus}
           </span>
         )}
       </div>

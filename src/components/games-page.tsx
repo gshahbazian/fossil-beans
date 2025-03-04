@@ -25,14 +25,14 @@ export default async function GamesPage({
       </h2>
 
       {games.map((game) => (
-        <GameEntry key={game.game.gameId} game={game} />
+        <GameEntry key={game.gameId} game={game} />
       ))}
     </main>
   )
 }
 
 async function GameEntry({ game }: { game: GameWithTeams }) {
-  const stats = await getGamePlayerStats(game.game.gameId)
+  const stats = await getGamePlayerStats(game.gameId)
 
   // GABE: add a nice 'starting soon' here
   if (stats.length === 0) return null

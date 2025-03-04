@@ -57,13 +57,13 @@ export default function GameStats({
           <h2 className="text-2xl font-bold">
             {game.awayTeam.abbreviation}{' '}
             <span className="font-mono font-normal">
-              {game.game.awayScore}-{game.game.homeScore}
+              {game.awayScore}-{game.homeScore}
             </span>{' '}
             {game.homeTeam.abbreviation}
           </h2>
 
           <span className="font-mono text-sm font-medium">
-            {game.game.gameStatus}
+            {game.gameStatus}
           </span>
         </div>
       </div>
