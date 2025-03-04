@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
+import { formatPercentage } from '@/lib/format-percentage'
 
 export default function StatsTable({
   stats,
@@ -81,11 +82,6 @@ function NumberCell({ children }: { children: React.ReactNode }) {
   return <TableCell className="text-right font-mono">{children}</TableCell>
 }
 
-const decimalFormat = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})
-
 function PercentageValue({
   numerator,
   denominator,
@@ -97,7 +93,7 @@ function PercentageValue({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span>{decimalFormat.format((numerator / denominator) * 100)}</span>
+          <span>{formatPercentage(numerator, denominator)}</span>
         </TooltipTrigger>
         <TooltipContent>
           <span>
@@ -116,23 +112,23 @@ function StatRow({
   stat: GamePlayerStat
   onPlayerClicked: (stat: GamePlayerStat) => void
 }) {
-  const trimmedMinutes = trimIntervalToMinsSecs(stat.minutesPlayed ?? '00:00')
-
   return (
     <TableRow
-      key={stat.playerName}
+      key={stat.player.playerId}
       onClick={() => onPlayerClicked(stat)}
       className="cursor-pointer [&_td]:h-9 [&_td]:py-0"
     >
       <TableCell className="sticky left-0 z-1 bg-neutral-50 dark:bg-neutral-900">
         <span className="invisible truncate border-r font-medium" aria-hidden>
-          {stat.playerName}
+          {stat.player.playerName}
         </span>
         <span className="absolute top-0 right-0 bottom-0 left-0 flex items-center border-r px-2 font-medium">
-          {stat.playerName}
+          {stat.player.playerName}
         </span>
       </TableCell>
-      <NumberCell>{trimmedMinutes}</NumberCell>
+      <NumberCell>
+        {trimIntervalToMinsSecs(stat.minutesPlayed ?? '00:00')}
+      </NumberCell>
       <NumberCell>{stat.points}</NumberCell>
       <NumberCell>{stat.threePointersMade}</NumberCell>
       <NumberCell>{stat.rebounds}</NumberCell>

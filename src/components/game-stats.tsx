@@ -76,7 +76,7 @@ export default function GameStats({
         <PlayerDialog
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
-          player={selectedPlayer}
+          playerStat={selectedPlayer}
           gameWithTeams={game}
         />
       )}

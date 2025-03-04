@@ -16,6 +16,11 @@
   --muted-foreground: hsl(0 0% 45.1%);
   --border: hsl(0 0% 89.8%);
   --ring: hsl(0 0% 3.9%);
+
+  --team-primary: red;
+  --team-secondary: red;
+  --team-dark-primary: red;
+  --team-dark-secondary: red;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -48,5 +53,53 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@utility team-splash {
+  background: linear-gradient(
+    135deg,
+    var(--team-primary) 0%,
+    var(--team-secondary) 100%
+  );
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(
+      135deg,
+      var(--team-dark-primary) 0%,
+      var(--team-dark-secondary) 100%
+    );
+  }
+}
+
+@utility stat-card-splash {
+  background: linear-gradient(
+    120deg,
+    var(--team-primary) 0%,
+    color-mix(in oklch, var(--team-primary), white 25%) 100%
+  );
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(
+      120deg,
+      var(--team-dark-primary) 0%,
+      color-mix(in oklch, var(--team-dark-primary), white 35%) 100%
+    );
+  }
+}
+
+@utility shooting-stat-bar {
+  background: linear-gradient(
+    90deg,
+    var(--team-primary) 0%,
+    color-mix(in oklch, var(--team-primary), white 20%) 100%
+  );
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(
+      90deg,
+      var(--team-dark-primary) 0%,
+      color-mix(in oklch, var(--team-dark-primary), white 30%) 100%
+    );
   }
 }

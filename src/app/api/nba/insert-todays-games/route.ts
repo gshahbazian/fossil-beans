@@ -121,6 +121,7 @@ async function insertPlayersFromGame(boxScore: BoxScore) {
         playerId: player.personId,
         teamId: tp.teamId,
         playerName: player.name,
+        jerseyNum: player.jerseyNum,
       }
     })
   })
@@ -137,6 +138,7 @@ async function insertPlayersFromGame(boxScore: BoxScore) {
       set: {
         teamId: sql`excluded.team_id`,
         playerName: sql`excluded.player_name`,
+        jerseyNum: sql`excluded.jersey_num`,
       },
     })
 }
@@ -150,7 +152,7 @@ async function insertPlayerStatsFromGame(boxScore: BoxScore) {
       return {
         gameId: boxScore.game.gameId,
         playerId: player.personId,
-        teamId: boxScore.game.homeTeam.teamId,
+        teamId: tp.teamId,
         playerName: player.name,
         minutesPlayed: player.statistics.minutes,
         points: player.statistics.points,

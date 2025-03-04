@@ -12,6 +12,7 @@ import {
   index,
   smallint,
 } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 
 // https://orm.drizzle.team/docs/goodies#multi-project-schema
 export const createTable = pgTableCreator((name) => `fossil-beans_${name}`)
@@ -49,6 +50,10 @@ export type GameInsert = typeof games.$inferInsert
 export const players = createTable('players', {
   playerId: integer().primaryKey().notNull(),
   playerName: varchar({ length: 100 }).notNull(),
+  jerseyNum: varchar({ length: 10 }),
+  // GABE-TODO: position and height need to come from another api call. not yet implemented.
+  position: varchar({ length: 10 }),
+  height: varchar({ length: 100 }),
   teamId: integer()
     .notNull()
     .references(() => teams.teamId),
@@ -131,3 +136,29 @@ export const apiKeys = createTable('api_keys', {
   expiresAt: timestamp({ withTimezone: true }),
   revokedAt: timestamp({ withTimezone: true }),
 })
+
+export const gamesRelations = relations(games, ({ one }) => ({
+  homeTeam: one(teams, {
+    fields: [games.homeTeamId],
+    references: [teams.teamId],
+  }),
+  awayTeam: one(teams, {
+    fields: [games.awayTeamId],
+    references: [teams.teamId],
+  }),
+}))
+
+export const playerStatsRelations = relations(playerStats, ({ one }) => ({
+  game: one(games, {
+    fields: [playerStats.gameId],
+    references: [games.gameId],
+  }),
+  player: one(players, {
+    fields: [playerStats.playerId],
+    references: [players.playerId],
+  }),
+  team: one(teams, {
+    fields: [playerStats.teamId],
+    references: [teams.teamId],
+  }),
+}))

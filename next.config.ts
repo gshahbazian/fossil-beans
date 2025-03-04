@@ -11,7 +11,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         hostname: 'cdn.nba.com',
-        pathname: '/headshots/nba/latest/260x190/**',
+        pathname: '/headshots/nba/latest/**',
+      },
+      {
+        hostname: 'cdn.nba.com',
+        pathname: '/logos/nba/**',
       },
     ],
   },
