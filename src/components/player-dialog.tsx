@@ -65,8 +65,8 @@ export default function PlayerDialog({
           <PlayerHeader player={playerStat.player} team={playerTeam} />
           <GameBar gameWithTeams={gameWithTeams} />
 
-          <div className="flex flex-col gap-3 bg-neutral-50 p-5 dark:bg-neutral-900">
-            <div className="grid grid-cols-3 gap-3">
+          <div className="flex flex-col gap-2 bg-neutral-50 p-2 sm:gap-3 sm:p-5 dark:bg-neutral-900">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               <StatCard
                 label="Pts"
                 value={playerStat.points ?? 0}
@@ -85,19 +85,19 @@ export default function PlayerDialog({
               />
             </div>
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              <StatCard label="Stl" value={playerStat.steals ?? 0} />
+              <StatCard label="Blk" value={playerStat.blocks ?? 0} />
+              <StatCard label="TO" value={playerStat.turnovers ?? 0} />
               <StatCard
                 label="Min"
                 value={trimIntervalToMinsSecs(
                   playerStat.minutesPlayed ?? '00:00'
                 )}
               />
-              <StatCard label="Stl" value={playerStat.steals ?? 0} />
-              <StatCard label="Blk" value={playerStat.blocks ?? 0} />
-              <StatCard label="TO" value={playerStat.turnovers ?? 0} />
             </div>
 
-            <div className="flex flex-col gap-3 rounded-xl bg-white p-4 shadow-sm dark:border dark:border-white/5 dark:bg-neutral-800">
+            <div className="flex flex-col gap-2 rounded-xl bg-white p-3 shadow-sm sm:gap-3 sm:p-4 dark:border dark:border-white/5 dark:bg-neutral-800">
               <span className="text-xs font-bold text-neutral-500 uppercase dark:text-neutral-400">
                 Shooting
               </span>
@@ -128,7 +128,7 @@ export default function PlayerDialog({
 
 function PlayerHeader({ player, team }: { player: Player; team: Team }) {
   return (
-    <div className="team-splash relative h-56">
+    <div className="team-splash relative h-48 sm:h-56">
       <div className="pointer-events-none absolute inset-0 grid place-content-center overflow-hidden opacity-10">
         <Image
           src={`https://cdn.nba.com/logos/nba/${team.teamId}/global/L/logo.svg`}
@@ -142,12 +142,12 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
       <Image
         src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`}
         alt={`${player.playerName} headshot`}
-        className="absolute right-0 bottom-0 w-66 object-contain"
+        className="absolute right-0 bottom-0 w-54 object-contain sm:w-66"
         width={1040}
         height={760}
       />
 
-      <div className="absolute bottom-0 left-0 z-10 flex flex-col items-start gap-1 p-5 text-white">
+      <div className="absolute bottom-0 left-0 z-10 flex flex-col items-start gap-1 p-3 text-white sm:p-5">
         {player.jerseyNum && (
           <span className="rounded bg-white/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm">
             #{player.jerseyNum}
@@ -172,17 +172,17 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
 
 function GameBar({ gameWithTeams }: { gameWithTeams: GameWithTeams }) {
   return (
-    <div className="flex items-center justify-between bg-black px-5 py-3 text-white">
-      <div className="flex items-center">
+    <div className="flex items-center justify-between bg-black px-2 py-3 text-white sm:px-5">
+      <div className="flex items-center gap-1 sm:gap-3">
         <TeamPill team={gameWithTeams.awayTeam} logoPosition="left" />
-        <span className="mx-4 font-mono text-sm font-bold">
+        <span className="font-mono text-sm font-bold">
           {gameWithTeams.game.awayScore}-{gameWithTeams.game.homeScore}
         </span>
         <TeamPill team={gameWithTeams.homeTeam} logoPosition="right" />
       </div>
 
-      <div className="flex items-center">
-        <span className="mr-2 text-xs text-neutral-400">
+      <div className="flex items-center gap-1 sm:gap-2">
+        <span className="text-xs text-neutral-400">
           {gameWithTeams.game.gameTime.toLocaleString('en-US', {
             day: 'numeric',
             month: 'short',
