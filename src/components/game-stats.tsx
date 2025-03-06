@@ -47,13 +47,13 @@ export default function GameStats({
 
   return (
     <div className="relative col-span-full grid grid-cols-subgrid gap-y-8">
-      <hr className="col-[2]" />
+      <hr className="col-2" />
 
       <div
         ref={headerRef}
         className="bg-background border-background sticky -top-0.5 z-2 col-span-full grid grid-cols-subgrid data-stuck:border-b data-stuck:shadow-sm sm:relative sm:top-auto sm:z-auto data-stuck:sm:border-none data-stuck:sm:shadow-none dark:border-neutral-900"
       >
-        <div className="col-[2] flex items-baseline justify-between">
+        <div className="col-2 flex items-baseline justify-between">
           <h2 className="text-2xl font-bold">
             {game.awayTeam.abbreviation}{' '}
             <span className="font-mono font-normal">
@@ -68,7 +68,7 @@ export default function GameStats({
         </div>
       </div>
 
-      <div className="col-[2]">
+      <div className="col-2">
         <StatsTable stats={stats} onPlayerClicked={onPlayerClicked} />
       </div>
 
