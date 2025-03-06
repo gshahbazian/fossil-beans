@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid API key' }, { status: 403 })
   }
 
-  revalidatePath('/')
+  const path = request.nextUrl.searchParams.get('path') || '/'
+  revalidatePath(path)
   return NextResponse.json({ success: true })
 }
