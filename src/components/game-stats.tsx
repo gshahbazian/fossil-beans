@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import PlayerDialog from '@/components/player-dialog'
 import { type GamePlayerStat, type GameWithTeams } from '@/server/db/queries'
 import StatsTable from '@/components/stats-table'
+import { usePostHog } from 'posthog-js/react'
 
 export default function GameStats({
   game,
@@ -16,10 +17,21 @@ export default function GameStats({
   const [selectedPlayer, setSelectedPlayer] = useState<GamePlayerStat | null>(
     null
   )
-  const onPlayerClicked = useCallback((player: GamePlayerStat) => {
-    setSelectedPlayer(player)
-    setIsOpen(true)
-  }, [])
+
+  const posthog = usePostHog()
+
+  const onPlayerClicked = useCallback(
+    (player: GamePlayerStat) => {
+      setSelectedPlayer(player)
+      setIsOpen(true)
+
+      posthog?.capture('player_clicked', {
+        player_name: player.player.playerName,
+        game_id: player.gameId,
+      })
+    },
+    [posthog]
+  )
 
   const headerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
