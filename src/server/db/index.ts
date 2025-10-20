@@ -1,29 +1,19 @@
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
+import { attachDatabasePool } from '@vercel/functions'
 import { env } from '@/env'
-import * as schema from '@/server/db/schema'
-import { neon, neonConfig } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-http'
+import * as schema from './schema'
 
-/**
- * fossil-beans uses neon serverless db for postgres
- *
- * Docs for connecting drizzle to neon:
- * https://orm.drizzle.team/docs/connect-neon
- * https://neon.tech/docs/serverless/serverless-driver
- */
+const pool = new Pool({
+  connectionString: env.DATABASE_URL,
+})
 
-const connectionString = env.DATABASE_URL
+// Pool drainer for serverless environments
+// https://vercel.com/blog/the-real-serverless-compute-to-database-connection-problem-solved
+attachDatabasePool(pool)
 
-if (env.NODE_ENV === 'development') {
-  neonConfig.fetchEndpoint = (host) => {
-    const [protocol, port] =
-      host === 'db.localtest.me' ? ['http', 4444] : ['https', 443]
-    return `${protocol}://${host}:${port}/sql`
-  }
-}
-
-const sql = neon(connectionString)
 export const db = drizzle({
-  client: sql,
+  client: pool,
   schema,
   casing: 'snake_case',
 })

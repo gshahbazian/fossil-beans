@@ -10,17 +10,16 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
 
-const eslintConfig = [
-  ...compat.extends(
-    'next/core-web-vitals',
-    'next/typescript',
-    'plugin:drizzle/recommended'
-  ),
-  {
-    plugins: {
-      drizzle: pluginDrizzle,
-    },
+const eslintConfig = [{
+  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]
+}, ...compat.extends(
+  'next/core-web-vitals',
+  'next/typescript',
+  'plugin:drizzle/recommended'
+), {
+  plugins: {
+    drizzle: pluginDrizzle,
   },
-]
+}]
 
 export default eslintConfig

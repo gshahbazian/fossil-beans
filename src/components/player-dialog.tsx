@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/dialog'
 import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import Image from 'next/image'
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { VisuallyHidden } from 'radix-ui'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 import { formatPercentage } from '@/lib/format-percentage'
 import { getTeamColors } from '@/lib/team-colors'

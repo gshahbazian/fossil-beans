@@ -85,16 +85,18 @@ export async function fetchGames(date: Date) {
   )
 
   const res = await fetch(
-    `https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=${encodedDate}&DateTo=${encodedDate}&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=T&Season=2024-25&SeasonType=Regular%20Season&Sorter=DATE`,
+    `https://stats.nba.com/stats/leaguegamelog?Counter=1000&DateFrom=${encodedDate}&DateTo=${encodedDate}&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=T&Season=2025-26&SeasonType=Regular%20Season&Sorter=DATE`,
     {
       referrer: 'https://www.nba.com/',
     }
   )
 
   if (!res.ok) {
+    console.error(`Error fetching game logs: ${res.status} ${res.statusText}`)
     throw new Error(`Failed to fetch game logs`)
   }
 
   const data = await res.json()
+  console.log('Fetched game log data:', data)
   return parseGameLog(data)
 }

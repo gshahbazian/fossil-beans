@@ -1,12 +1,12 @@
-# Local development with Neon
-# https://neon.tech/guides/local-development-with-neon
 #
 # Run `docker-compose up -d` to start the services.
 #
+
 services:
   postgres:
     image: postgres:15
-    command: '-d 1'
+    container_name: postgres_db
+    restart: always
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
@@ -15,19 +15,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=fossil-beans
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  neon-proxy:
-    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
-    environment:
-      - PG_CONNECTION_STRING=postgres://postgres:postgres@postgres:5432/fossil-beans
-    ports:
-      - '4444:4444'
-    depends_on:
-      postgres:
-        condition: service_healthy
+
 volumes:
   db_data:
