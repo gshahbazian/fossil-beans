@@ -7,7 +7,10 @@ import {
 
 // 12 hour ssr cache
 export const revalidate = 43200
-export const dynamic = 'force-static'
+
+export async function generateStaticParams() {
+  return []
+}
 
 export default async function Home() {
   console.time('[Index] Total render time')

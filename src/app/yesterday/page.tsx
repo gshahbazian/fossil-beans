@@ -10,7 +10,10 @@ import { Metadata } from 'next'
 
 // 24 hour ssr cache
 export const revalidate = 86400
-export const dynamic = 'force-static'
+
+export async function generateStaticParams() {
+  return []
+}
 
 export const metadata: Metadata = {
   title: 'Yesterday on Fossil Beans',
