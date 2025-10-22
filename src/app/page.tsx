@@ -2,11 +2,12 @@ import GamesPage from '@/components/games-page'
 import {
   getPSTTimeOfLatestGame,
   getAllGamesOnPSTDate,
+  getGamePlayerStats,
 } from '@/server/db/queries'
 
 // 12 hour ssr cache
 export const revalidate = 43200
-export const dynamic = 'force-dynamic' // TEMP: Testing if ISR is causing 20s delay
+export const dynamic = 'force-static'
 
 export default async function Home() {
   console.time('[Index] Total render time')
@@ -23,7 +24,26 @@ export default async function Home() {
 
   console.log(`[Index] Found ${games.length} games for ${pstTimeOfLatestGame}`)
 
-  const result = <GamesPage pstDate={pstTimeOfLatestGame} games={games} />
+  // Fetch all game stats in parallel
+  console.time('[Index] getAllGameStats (parallel)')
+  const statsPromises = games.map((game) => getGamePlayerStats(game.gameId))
+  const statsArrays = await Promise.all(statsPromises)
+  console.timeEnd('[Index] getAllGameStats (parallel)')
+
+  // Create a map of gameId -> stats for easy lookup
+  const gameStats = new Map(
+    games.map((game, index) => [game.gameId, statsArrays[index]!])
+  )
+
+  console.log(`[Index] Fetched stats for ${gameStats.size} games`)
+
+  const result = (
+    <GamesPage
+      pstDate={pstTimeOfLatestGame}
+      games={games}
+      gameStats={gameStats}
+    />
+  )
 
   console.timeEnd('[Index] Total render time')
   return result

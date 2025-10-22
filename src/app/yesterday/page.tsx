@@ -2,6 +2,7 @@ import {
   getAllGamesOnPSTDate,
   getPSTTimeOfLatestGame,
   getPSTTimeOfLatestGameBefore,
+  getGamePlayerStats,
 } from '@/server/db/queries'
 import GamesPage from '@/components/games-page'
 import { notFound } from 'next/navigation'
@@ -26,5 +27,20 @@ export default async function YesterdayPage() {
     ? await getAllGamesOnPSTDate(pstTimeOfLatestGameBefore)
     : []
 
-  return <GamesPage pstDate={pstTimeOfLatestGameBefore} games={games} />
+  // Fetch all game stats in parallel
+  const statsPromises = games.map((game) => getGamePlayerStats(game.gameId))
+  const statsArrays = await Promise.all(statsPromises)
+
+  // Create a map of gameId -> stats for easy lookup
+  const gameStats = new Map(
+    games.map((game, index) => [game.gameId, statsArrays[index]!])
+  )
+
+  return (
+    <GamesPage
+      pstDate={pstTimeOfLatestGameBefore}
+      games={games}
+      gameStats={gameStats}
+    />
+  )
 }

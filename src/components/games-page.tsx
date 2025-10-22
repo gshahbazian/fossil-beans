@@ -1,17 +1,22 @@
 import GameStats from '@/components/game-stats'
-import { getGamePlayerStats, type GameWithTeams } from '@/server/db/queries'
+import {
+  type GameWithTeams,
+  type GamePlayerStat,
+} from '@/server/db/queries'
 
 const formatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
 })
 
-export default async function GamesPage({
+export default function GamesPage({
   pstDate,
   games,
+  gameStats,
 }: {
   pstDate?: string
   games: GameWithTeams[]
+  gameStats: Map<string, GamePlayerStat[]>
 }) {
   return (
     <main className="grid w-screen grid-cols-[1fr_min(56rem,100%-1rem)_1fr] gap-x-2 gap-y-8 py-8">
@@ -25,22 +30,23 @@ export default async function GamesPage({
       </h2>
 
       {games.map((game) => (
-        <GameEntry key={game.gameId} game={game} />
+        <GameEntry
+          key={game.gameId}
+          game={game}
+          stats={gameStats.get(game.gameId) ?? []}
+        />
       ))}
     </main>
   )
 }
 
-async function GameEntry({ game }: { game: GameWithTeams }) {
-  const timerLabel = `[GameEntry] getGamePlayerStats(${game.gameId})`
-  console.time(timerLabel)
-  const stats = await getGamePlayerStats(game.gameId)
-  console.timeEnd(timerLabel)
-
-  console.log(
-    `[GameEntry] ${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}: ${stats.length} player stats`
-  )
-
+function GameEntry({
+  game,
+  stats,
+}: {
+  game: GameWithTeams
+  stats: GamePlayerStat[]
+}) {
   // GABE: add a nice 'starting soon' here
   if (stats.length === 0) return null
 
