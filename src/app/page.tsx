@@ -6,7 +6,7 @@ import {
 
 // 12 hour ssr cache
 export const revalidate = 43200
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic' // TEMP: Testing if ISR is causing 20s delay
 
 export default async function Home() {
   console.time('[Index] Total render time')
