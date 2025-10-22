@@ -1,7 +1,6 @@
 import '@/styles/globals.css'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { type Metadata } from 'next'
-import { PostHogProvider } from '@/components/posthog-provider'
 
 export const metadata: Metadata = {
   title: 'Fossil Beans',
@@ -28,9 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${giest.className} ${giestMono.variable}`}>
-      <body className="overflow-x-hidden">
-        <PostHogProvider>{children}</PostHogProvider>
-      </body>
+      <body className="overflow-x-hidden">{children}</body>
     </html>
   )
 }
