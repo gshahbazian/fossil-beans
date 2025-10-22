@@ -32,7 +32,14 @@ export default async function GamesPage({
 }
 
 async function GameEntry({ game }: { game: GameWithTeams }) {
+  const timerLabel = `[GameEntry] getGamePlayerStats(${game.gameId})`
+  console.time(timerLabel)
   const stats = await getGamePlayerStats(game.gameId)
+  console.timeEnd(timerLabel)
+
+  console.log(
+    `[GameEntry] ${game.awayTeam.abbreviation} @ ${game.homeTeam.abbreviation}: ${stats.length} player stats`
+  )
 
   // GABE: add a nice 'starting soon' here
   if (stats.length === 0) return null

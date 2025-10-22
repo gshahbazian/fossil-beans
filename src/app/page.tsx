@@ -9,10 +9,22 @@ export const revalidate = 43200
 export const dynamic = 'force-static'
 
 export default async function Home() {
+  console.time('[Index] Total render time')
+
+  console.time('[Index] getPSTTimeOfLatestGame')
   const pstTimeOfLatestGame = await getPSTTimeOfLatestGame()
+  console.timeEnd('[Index] getPSTTimeOfLatestGame')
+
+  console.time('[Index] getAllGamesOnPSTDate')
   const games = pstTimeOfLatestGame
     ? await getAllGamesOnPSTDate(pstTimeOfLatestGame)
     : []
+  console.timeEnd('[Index] getAllGamesOnPSTDate')
 
-  return <GamesPage pstDate={pstTimeOfLatestGame} games={games} />
+  console.log(`[Index] Found ${games.length} games for ${pstTimeOfLatestGame}`)
+
+  const result = <GamesPage pstDate={pstTimeOfLatestGame} games={games} />
+
+  console.timeEnd('[Index] Total render time')
+  return result
 }

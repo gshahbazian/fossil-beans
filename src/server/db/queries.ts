@@ -55,7 +55,7 @@ export type GamePlayerStat = Awaited<
 export async function getGamePlayerStats(gameId: string) {
   return await db.query.playerStats.findMany({
     where: and(
-      eq(games.gameId, gameId),
+      eq(playerStats.gameId, gameId),
       sql`EXTRACT(epoch FROM minutes_played) > 0`
     ),
     with: {
