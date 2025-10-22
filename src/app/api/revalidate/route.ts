@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyRequest } from '@/server/api-keys'
+import { redirect } from 'next/navigation'
 
 export async function GET(request: NextRequest) {
   const isValid = await verifyRequest(request)
@@ -10,5 +11,6 @@ export async function GET(request: NextRequest) {
 
   const path = request.nextUrl.searchParams.get('path') || '/'
   revalidatePath(path)
-  return NextResponse.json({ success: true })
+  // GABE: this re-caches the page for the next request
+  redirect(path)
 }
