@@ -71,7 +71,7 @@ export default function PlayerDialog({
                 label="Pts"
                 value={playerStat.points ?? 0}
                 size="large"
-                className="stat-card-splash text-white dark:border-0 dark:outline-1 dark:-outline-offset-1 dark:outline-white/20 [&_[data-slot='label']]:text-white/70 [&>div]:bg-black/5"
+                className="stat-card-splash text-white dark:border-0 dark:outline-1 dark:-outline-offset-1 dark:outline-white/20 **:data-[slot='label']:text-white/70 [&>div]:bg-black/5"
               />
               <StatCard
                 label="Reb"
@@ -165,7 +165,7 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
         </div>
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
     </div>
   )
 }
