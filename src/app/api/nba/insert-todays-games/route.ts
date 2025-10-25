@@ -13,7 +13,7 @@ import {
   PlayerStatsInsert,
 } from '@/server/db/schema'
 import { sql } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchGames } from '@/server/nba/game-log'
 import { fetchTodayScoreboard } from '@/server/nba/today-scoreboard'
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
   await Promise.all(boxScores.map(insertPlayersFromGame))
   await Promise.all(boxScores.map(insertPlayerStatsFromGame))
 
-  revalidatePath('/')
+  revalidateTag('/', 'max')
 
   if (request.nextUrl.searchParams.get('revalidate') === 'true') {
     try {

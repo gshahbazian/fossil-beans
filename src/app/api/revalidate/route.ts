@@ -1,4 +1,4 @@
-import { revalidatePath } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyRequest } from '@/server/api-keys'
 
@@ -9,6 +9,6 @@ export async function GET(request: NextRequest) {
   }
 
   const path = request.nextUrl.searchParams.get('path') || '/'
-  revalidatePath(path)
+  revalidateTag(path, 'max')
   return NextResponse.json({ success: true })
 }

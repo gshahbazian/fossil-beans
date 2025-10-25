@@ -6,16 +6,17 @@ import {
 import GamesPage from '@/components/games-page'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-
-// 24 hour ssr cache
-export const revalidate = 86400
-export const dynamic = 'force-static'
+import { cacheLife, cacheTag } from 'next/cache'
 
 export const metadata: Metadata = {
   title: 'Yesterday on Fossil Beans',
 }
 
 export default async function YesterdayPage() {
+  'use cache'
+  cacheLife('days')
+  cacheTag('/yesterday')
+
   const pstTimeOfLatestGame = await getPSTTimeOfLatestGame()
   if (!pstTimeOfLatestGame) notFound()
 

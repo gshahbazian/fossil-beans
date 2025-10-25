@@ -3,12 +3,13 @@ import {
   getPSTTimeOfLatestGame,
   getAllGamesOnPSTDate,
 } from '@/server/db/queries'
-
-// 12 hour ssr cache
-export const revalidate = 43200
-export const dynamic = 'force-static'
+import { cacheLife, cacheTag } from 'next/cache'
 
 export default async function Home() {
+  'use cache'
+  cacheLife('days')
+  cacheTag('/')
+
   const pstTimeOfLatestGame = await getPSTTimeOfLatestGame()
   const games = pstTimeOfLatestGame
     ? await getAllGamesOnPSTDate(pstTimeOfLatestGame)
