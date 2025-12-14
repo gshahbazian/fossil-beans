@@ -45,7 +45,7 @@ export default function PlayerDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(28rem,100%-1rem)] overflow-hidden rounded-2xl border-0 p-0 shadow-lg dark:border dark:border-white/5">
+      <DialogContent className="w-[min(28rem,100%-1rem)] overflow-hidden rounded-2xl border-0 p-0 shadow-lg **:data-[slot='dialog-close']:focus:ring-0 **:data-[slot='dialog-close']:focus-visible:border-0 **:data-[slot='dialog-close']:focus-visible:ring-0 dark:border dark:border-white/5">
         <VisuallyHidden.Root>
           <DialogTitle>{playerStat.player.playerName}</DialogTitle>
           <DialogDescription>
@@ -71,7 +71,7 @@ export default function PlayerDialog({
                 label="Pts"
                 value={playerStat.points ?? 0}
                 size="large"
-                className="stat-card-splash text-white dark:border-0 dark:outline-1 dark:-outline-offset-1 dark:outline-white/20 **:data-[slot='label']:text-white/70 [&>div]:bg-black/5"
+                className="stat-card-splash text-white **:data-[slot='label']:text-white/70 dark:border-0 dark:outline-1 dark:-outline-offset-1 dark:outline-white/20 [&>div]:bg-black/5"
               />
               <StatCard
                 label="Reb"

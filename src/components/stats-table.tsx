@@ -90,7 +90,7 @@ function PercentageValue({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           <span>{formatPercentage(numerator, denominator)}</span>
         </TooltipTrigger>
         <TooltipContent>
