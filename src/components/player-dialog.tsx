@@ -45,7 +45,7 @@ export default function PlayerDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(28rem,100%-1rem)] overflow-hidden rounded-2xl border-0 p-0 shadow-lg **:data-[slot='dialog-close']:focus:ring-0 **:data-[slot='dialog-close']:focus-visible:border-0 **:data-[slot='dialog-close']:focus-visible:ring-0 dark:border dark:border-white/5">
+      <DialogContent className="w-[min(28rem,100%-1rem)] overflow-hidden rounded-2xl p-0 shadow-lg **:data-[slot='dialog-close']:focus:ring-0 **:data-[slot='dialog-close']:focus-visible:border-0 **:data-[slot='dialog-close']:focus-visible:ring-0 dark:border dark:border-white/5">
         <VisuallyHidden.Root>
           <DialogTitle>{playerStat.player.playerName}</DialogTitle>
           <DialogDescription>
