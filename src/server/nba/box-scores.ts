@@ -1,3 +1,5 @@
+import { env } from '@/env'
+
 type Meta = {
   version: number
   code: number
@@ -196,12 +198,11 @@ export class ForbiddenError extends Error {
 }
 
 export async function fetchBoxScore(gameId: string) {
-  const res = await fetch(
-    `https://cdn.nba.com/static/json/liveData/boxscore/boxscore_${gameId}.json`,
-    {
-      referrer: 'https://www.nba.com/',
-    }
-  )
+  const baseUrl = env.NBA_BOX_SCORE_URL
+
+  const res = await fetch(`${baseUrl}/boxscore_${gameId}.json`, {
+    referrer: 'https://www.nba.com/',
+  })
 
   if (!res.ok) {
     if (res.status === 403) {
