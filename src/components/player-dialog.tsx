@@ -45,7 +45,7 @@ export default function PlayerDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(28rem,100%-1rem)] overflow-hidden rounded-2xl p-0 shadow-lg [mask-image:radial-gradient(white,white)] dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10">
+      <DialogContent className="w-[min(28rem,100%-1rem)] rounded-2xl p-0 shadow-lg [clip-path:inset(0_round_1rem)] dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10">
         <VisuallyHidden.Root>
           <DialogTitle>{playerStat.player.playerName}</DialogTitle>
           <DialogDescription>
