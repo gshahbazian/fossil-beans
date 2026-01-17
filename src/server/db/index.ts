@@ -4,8 +4,11 @@ import { attachDatabasePool } from '@vercel/functions'
 import { env } from '@/env'
 import * as schema from './schema'
 
+const connectionUrl = new URL(env.DATABASE_URL)
+connectionUrl.searchParams.set('sslmode', 'verify-full')
+
 const pool = new Pool({
-  connectionString: env.DATABASE_URL,
+  connectionString: connectionUrl.toString(),
 })
 
 // Pool drainer for serverless environments
