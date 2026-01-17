@@ -97,7 +97,7 @@ export default function PlayerDialog({
               />
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl bg-white p-3 shadow-sm sm:gap-3 sm:p-4 dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10 dark:bg-neutral-800">
+            <div className="flex flex-col gap-2 rounded-xl bg-white p-3 shadow-sm sm:gap-3 sm:p-4 dark:bg-neutral-800 dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10">
               <span className="text-xs font-bold text-neutral-500 uppercase dark:text-neutral-400">
                 Shooting
               </span>
@@ -213,7 +213,7 @@ function StatCard({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl bg-white text-neutral-900 shadow-sm dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10 dark:bg-neutral-800 dark:text-white',
+        'overflow-hidden rounded-xl bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-white dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10',
         className
       )}
     >
