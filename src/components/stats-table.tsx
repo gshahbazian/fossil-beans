@@ -125,7 +125,7 @@ function StatRow({
         </span>
       </TableCell>
       <NumberCell>
-        {trimIntervalToMinsSecs(stat.minutesPlayed ?? '00:00')}
+        {trimIntervalToMinsSecs(stat.minutesSeconds ?? 0)}
       </NumberCell>
       <NumberCell>{stat.points}</NumberCell>
       <NumberCell>{stat.threePointersMade}</NumberCell>

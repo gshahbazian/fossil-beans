@@ -5,7 +5,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
-import Image from 'next/image'
 import { VisuallyHidden } from 'radix-ui'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 import { formatPercentage } from '@/lib/format-percentage'
@@ -91,9 +90,7 @@ export default function PlayerDialog({
               <StatCard label="TO" value={playerStat.turnovers ?? 0} />
               <StatCard
                 label="Min"
-                value={trimIntervalToMinsSecs(
-                  playerStat.minutesPlayed ?? '00:00'
-                )}
+                value={trimIntervalToMinsSecs(playerStat.minutesSeconds ?? 0)}
               />
             </div>
 
@@ -130,16 +127,14 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
   return (
     <div className="team-splash relative h-48 sm:h-56">
       <div className="pointer-events-none absolute inset-0 grid place-content-center overflow-hidden opacity-10">
-        <Image
+        <img
           src={`https://cdn.nba.com/logos/nba/${team.teamId}/global/L/logo.svg`}
           alt={`${team.abbreviation} logo`}
-          fill
-          className="scale-[2] object-contain"
-          unoptimized
+          className="absolute inset-0 h-full w-full scale-[2] object-contain"
         />
       </div>
 
-      <Image
+      <img
         src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`}
         alt={`${player.playerName} headshot`}
         className="absolute right-0 bottom-0 w-54 object-contain sm:w-66"
@@ -282,12 +277,10 @@ function TeamPill({
 }) {
   const logoCircle = (
     <div className="pointer-events-none relative size-6 shrink-0 rounded-full bg-white/10 p-0.5">
-      <Image
+      <img
         src={`https://cdn.nba.com/logos/nba/${team.teamId}/global/L/logo.svg`}
         alt={`${team.teamName} logo`}
-        fill
-        className="object-contain"
-        unoptimized
+        className="absolute inset-0 h-full w-full object-contain"
       />
     </div>
   )

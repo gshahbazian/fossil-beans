@@ -1,5 +1,3 @@
-import { env } from '@/env'
-
 type Parameters = {
   LeagueID: string
   Season: string
@@ -86,12 +84,13 @@ export async function fetchGames(date: Date) {
     })
   )
 
-  const baseUrl = env.NBA_GAME_LOG_URL
+  const baseUrl =
+    process.env.NBA_GAME_LOG_URL ?? 'https://stats.nba.com/stats/leaguegamelog'
 
   const res = await fetch(
     `${baseUrl}?Counter=1000&DateFrom=${encodedDate}&DateTo=${encodedDate}&Direction=DESC&ISTRound=&LeagueID=00&PlayerOrTeam=T&Season=2025-26&SeasonType=Regular%20Season&Sorter=DATE`,
     {
-      referrer: 'https://www.nba.com/',
+      headers: { referer: 'https://www.nba.com/' },
     }
   )
 
@@ -100,7 +99,6 @@ export async function fetchGames(date: Date) {
     throw new Error(`Failed to fetch game logs`)
   }
 
-  const data = await res.json()
-  console.log('Fetched game log data:', data)
+  const data = (await res.json()) as LeagueGameLog
   return parseGameLog(data)
 }

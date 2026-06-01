@@ -1,13 +1,8 @@
 /**
- * Interval is in format HH:MM:SS.MS or HH:MM:SS
- *
- * This function returns just M:SS.
+ * Takes total seconds and returns "M:SS".
  */
-export function trimIntervalToMinsSecs(interval: string) {
-  const [, minutes, seconds] = interval.split(':')
-
-  const cleanMins = minutes?.replace(/^0/, '') ?? '0'
-  const cleanSecs = seconds?.split('.')[0] ?? '00'
-
-  return `${cleanMins}:${cleanSecs}`
+export function trimIntervalToMinsSecs(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }

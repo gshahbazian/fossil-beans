@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fossil-beans",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fossil-beans",
+      "database_id": "REPLACE_WITH_REMOTE_DB_ID",
+      "migrations_dir": "./drizzle"
+    }
+  ],
+  "vars": {
+    "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
+    "NBA_BOX_SCORE_URL": "https://cdn.nba.com/static/json/liveData/boxscore",
+    "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json"
+  }
+}

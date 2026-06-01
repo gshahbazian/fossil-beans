@@ -1,5 +1,3 @@
-import { env } from '@/env'
-
 type Meta = {
   version: number
   code: number
@@ -49,16 +47,17 @@ export type TodayScoreboard = {
 }
 
 export async function fetchTodayScoreboard() {
-  const url = env.NBA_SCOREBOARD_URL
+  const url =
+    process.env.NBA_SCOREBOARD_URL ??
+    'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json'
 
   const res = await fetch(url, {
-    referrer: 'https://www.nba.com/',
+    headers: { referer: 'https://www.nba.com/' },
   })
 
   if (!res.ok) {
     throw new Error(`Failed to fetch today's scoreboard`)
   }
 
-  const data = await res.json()
-  return data as TodayScoreboard
+  return (await res.json()) as TodayScoreboard
 }

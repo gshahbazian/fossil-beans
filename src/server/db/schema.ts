@@ -1,141 +1,108 @@
-import { sql } from 'drizzle-orm'
+import { sql, relations } from 'drizzle-orm'
 import {
-  varchar,
+  sqliteTable,
   integer,
-  interval,
-  pgTableCreator,
-  primaryKey,
-  timestamp,
-  uuid,
-  customType,
   text,
+  primaryKey,
   index,
-  smallint,
-} from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+} from 'drizzle-orm/sqlite-core'
 
-// https://orm.drizzle.team/docs/goodies#multi-project-schema
-export const createTable = pgTableCreator((name) => `fossil-beans_${name}`)
-
-export const teams = createTable('teams', {
-  teamId: integer().primaryKey().notNull(),
-  teamName: varchar({ length: 100 }).notNull().unique(),
-  abbreviation: varchar({ length: 10 }).notNull().unique(),
+export const teams = sqliteTable('teams', {
+  teamId: integer('team_id').primaryKey().notNull(),
+  teamName: text('team_name').notNull().unique(),
+  abbreviation: text('abbreviation').notNull().unique(),
 })
 
 export type Team = typeof teams.$inferSelect
 
-export const games = createTable('games', {
-  gameId: varchar({ length: 100 }).primaryKey().notNull(),
-  gameTime: timestamp({ withTimezone: true }).notNull(),
-  homeTeamId: integer()
-    .notNull()
-    .references(() => teams.teamId),
-  awayTeamId: integer()
-    .notNull()
-    .references(() => teams.teamId),
-  homeScore: smallint().default(0).notNull(),
-  awayScore: smallint().default(0).notNull(),
-  gameStatus: varchar({ length: 100 }), // ex: 'Final', 'Q1 8:59'
-  period: smallint(),
-  updatedAt: timestamp({ withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-})
+export const games = sqliteTable(
+  'games',
+  {
+    gameId: text('game_id').primaryKey().notNull(),
+    gameTime: integer('game_time', { mode: 'timestamp_ms' }).notNull(),
+    pstDate: text('pst_date').notNull(),
+    homeTeamId: integer('home_team_id')
+      .notNull()
+      .references(() => teams.teamId),
+    awayTeamId: integer('away_team_id')
+      .notNull()
+      .references(() => teams.teamId),
+    homeScore: integer('home_score').default(0).notNull(),
+    awayScore: integer('away_score').default(0).notNull(),
+    gameStatus: text('game_status'),
+    period: integer('period'),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date())
+      .$onUpdateFn(() => new Date()),
+  },
+  (t) => [index('idx_games_pst_date').on(t.pstDate)]
+)
 
 export type Game = typeof games.$inferSelect
 export type GameInsert = typeof games.$inferInsert
 
-export const players = createTable('players', {
-  playerId: integer().primaryKey().notNull(),
-  playerName: varchar({ length: 100 }).notNull(),
-  jerseyNum: varchar({ length: 10 }),
-  // GABE-TODO: position and height need to come from another api call. not yet implemented.
-  position: varchar({ length: 10 }),
-  height: varchar({ length: 100 }),
-  teamId: integer()
+export const players = sqliteTable('players', {
+  playerId: integer('player_id').primaryKey().notNull(),
+  playerName: text('player_name').notNull(),
+  jerseyNum: text('jersey_num'),
+  position: text('position'),
+  height: text('height'),
+  teamId: integer('team_id')
     .notNull()
     .references(() => teams.teamId),
 })
 
 export type Player = typeof players.$inferSelect
 
-export const playerStats = createTable(
+export const playerStats = sqliteTable(
   'player_stats',
   {
-    gameId: varchar({ length: 100 })
+    gameId: text('game_id')
       .notNull()
       .references(() => games.gameId, { onDelete: 'cascade' }),
-    playerId: integer()
+    playerId: integer('player_id')
       .notNull()
       .references(() => players.playerId),
-    teamId: integer()
+    teamId: integer('team_id')
       .notNull()
       .references(() => teams.teamId),
-    minutesPlayed: interval().default('PT00M00.00S'),
-    points: smallint(),
-    rebounds: smallint(),
-    assists: smallint(),
-    steals: smallint(),
-    blocks: smallint(),
-    fieldGoalsMade: smallint(),
-    fieldGoalsAttempted: smallint(),
-    threePointersMade: smallint(),
-    threePointersAttempted: smallint(),
-    freeThrowsMade: smallint(),
-    freeThrowsAttempted: smallint(),
-    turnovers: smallint(),
-    fouls: smallint(),
-    plusMinus: smallint(),
-    espnPoints: smallint(),
-    updatedAt: timestamp({ withTimezone: true })
+    minutesSeconds: integer('minutes_seconds').default(0),
+    points: integer('points'),
+    rebounds: integer('rebounds'),
+    assists: integer('assists'),
+    steals: integer('steals'),
+    blocks: integer('blocks'),
+    fieldGoalsMade: integer('field_goals_made'),
+    fieldGoalsAttempted: integer('field_goals_attempted'),
+    threePointersMade: integer('three_pointers_made'),
+    threePointersAttempted: integer('three_pointers_attempted'),
+    freeThrowsMade: integer('free_throws_made'),
+    freeThrowsAttempted: integer('free_throws_attempted'),
+    turnovers: integer('turnovers'),
+    fouls: integer('fouls'),
+    plusMinus: integer('plus_minus'),
+    espnPoints: integer('espn_points'),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
       .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
+      .$defaultFn(() => new Date())
+      .$onUpdateFn(() => new Date()),
   },
-  (table) => [
+  (t) => [
     primaryKey({
       name: 'player_stats_pk',
-      columns: [table.gameId, table.playerId],
+      columns: [t.gameId, t.playerId],
     }),
-
-    // Partial index for filtering
-    index('idx_player_stats_minutes_epoch')
-      .on(table.gameId)
-      .where(sql`EXTRACT(epoch FROM ${table.minutesPlayed}) > 0`),
-
-    // Ordering index for sorting
     index('idx_player_stats_order').on(
-      sql`${table.espnPoints} DESC`,
-      sql`${table.minutesPlayed} DESC`,
-      table.playerId
+      sql`${t.espnPoints} DESC`,
+      sql`${t.minutesSeconds} DESC`,
+      t.playerId
     ),
   ]
 )
 
 export type PlayerStats = typeof playerStats.$inferSelect
 export type PlayerStatsInsert = typeof playerStats.$inferInsert
-
-const bytea = customType<{
-  data: Buffer
-  default: false
-}>({
-  dataType() {
-    return 'bytea'
-  },
-})
-
-export const apiKeys = createTable('api_keys', {
-  id: uuid().defaultRandom().primaryKey(),
-  consumerName: varchar({ length: 100 }).notNull().unique(),
-  encryptedKey: bytea().notNull(),
-  iv: bytea().notNull(),
-  keyHash: text().unique(),
-  createdAt: timestamp({ withTimezone: true }).defaultNow(),
-  expiresAt: timestamp({ withTimezone: true }),
-  revokedAt: timestamp({ withTimezone: true }),
-})
 
 export const gamesRelations = relations(games, ({ one }) => ({
   homeTeam: one(teams, {

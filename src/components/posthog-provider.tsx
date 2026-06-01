@@ -1,54 +1,41 @@
-'use client'
-
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react'
-import { Suspense, useEffect } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { env } from '@/env'
+import { useEffect } from 'react'
+import { useRouterState } from '@tanstack/react-router'
+
+const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
+const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    if (!env.NEXT_PUBLIC_POSTHOG_KEY) return
+    if (!POSTHOG_KEY) return
 
-    posthog.init(env.NEXT_PUBLIC_POSTHOG_KEY, {
-      api_host: '/ph',
-      ui_host: env.NEXT_PUBLIC_POSTHOG_HOST,
-      capture_pageview: false, // We capture pageviews manually
-      capture_pageleave: true, // Enable pageleave capture
+    posthog.init(POSTHOG_KEY, {
+      api_host: POSTHOG_HOST ?? 'https://us.i.posthog.com',
+      capture_pageview: false,
+      capture_pageleave: true,
     })
   }, [])
 
   return (
     <PHProvider client={posthog}>
-      <SuspendedPostHogPageView />
+      <PostHogPageView />
       {children}
     </PHProvider>
   )
 }
 
 function PostHogPageView() {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const search = useRouterState({ select: (s) => s.location.searchStr })
   const posthog = usePostHog()
 
   useEffect(() => {
-    if (pathname && posthog) {
-      let url = window.origin + pathname
-      const search = searchParams.toString()
-      if (search) {
-        url += '?' + search
-      }
-      posthog.capture('$pageview', { $current_url: url })
-    }
-  }, [pathname, searchParams, posthog])
+    if (typeof window === 'undefined' || !posthog) return
+    let url = window.location.origin + pathname
+    if (search) url += search.startsWith('?') ? search : `?${search}`
+    posthog.capture('$pageview', { $current_url: url })
+  }, [pathname, search, posthog])
 
   return null
-}
-
-function SuspendedPostHogPageView() {
-  return (
-    <Suspense fallback={null}>
-      <PostHogPageView />
-    </Suspense>
-  )
 }

@@ -1,5 +1,3 @@
-'use client'
-
 import { useCallback, useEffect, useRef, useState } from 'react'
 import PlayerDialog from '@/components/player-dialog'
 import { type GamePlayerStat, type GameWithTeams } from '@/server/db/queries'
