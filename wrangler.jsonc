@@ -3,7 +3,7 @@
   "name": "fossil-beans",
   "compatibility_date": "2026-06-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry",
+  "main": "./src/server-entry.ts",
   "observability": { "enabled": true },
   "assets": {
     "directory": "./dist/client",
@@ -20,6 +20,10 @@
   "vars": {
     "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
     "NBA_BOX_SCORE_URL": "https://cdn.nba.com/static/json/liveData/boxscore",
-    "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json"
+    "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
+    // PURGE_SECRET is overridden by `wrangler secret put PURGE_SECRET` in
+    // production. The local-dev value below is fine for `vite dev` because
+    // local caches.default is in-memory.
+    "PURGE_SECRET": "local-dev-purge-secret"
   }
 }

@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
 #
-# Fetch today's NBA box scores and upsert them into D1.
+# Fetch today's NBA box scores and upsert them into D1, then purge the edge
+# cache for the home page so the next request re-renders against fresh data.
 #
 # Usage:
 #   ./scripts/insert-todays-games.sh --local
 #   ./scripts/insert-todays-games.sh --remote
 #   ./scripts/insert-todays-games.sh --local 2025-01-15
 #   ./scripts/insert-todays-games.sh --remote 2025-01-15
+#
+# Cache purge is best-effort. It uses these env vars (with sensible local
+# defaults):
+#   PURGE_URL     base URL of the deployment (e.g. https://fossil-beans.workers.dev)
+#   PURGE_SECRET  bearer token matching the PURGE_SECRET worker var/secret
+#
+# For --remote you'll usually want:
+#   PURGE_URL=https://your-deploy.example.com \
+#   PURGE_SECRET=$(op read ...) \
+#   ./scripts/insert-todays-games.sh --remote
 #
 set -euo pipefail
 
@@ -36,3 +47,20 @@ if [ ! -s "$TMP" ]; then
 fi
 
 pnpm exec wrangler d1 execute fossil-beans "$TARGET" --file="$TMP"
+
+if [ "$TARGET" = "--local" ]; then
+  : "${PURGE_URL:=http://localhost:3000}"
+  : "${PURGE_SECRET:=local-dev-purge-secret}"
+fi
+
+if [ -n "${PURGE_URL:-}" ] && [ -n "${PURGE_SECRET:-}" ]; then
+  echo "Purging cache at $PURGE_URL/api/purge-cache"
+  if ! curl -fsS -X POST \
+    -H "Authorization: Bearer $PURGE_SECRET" \
+    "$PURGE_URL/api/purge-cache"; then
+    echo "(purge failed — is the worker running / PURGE_SECRET correct?)" >&2
+  fi
+  echo
+else
+  echo "(skipping cache purge; PURGE_URL or PURGE_SECRET not set)" >&2
+fi
