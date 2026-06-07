@@ -5,25 +5,29 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server-entry.ts",
   "observability": { "enabled": true },
+  "triggers": {
+    "crons": [], // ["*/5 20-23,0-7 * * *"],
+  },
   "assets": {
     "directory": "./dist/client",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "fossil-beans",
       "database_id": "REPLACE_WITH_REMOTE_DB_ID",
-      "migrations_dir": "./drizzle"
-    }
+      "migrations_dir": "./drizzle",
+    },
   ],
   "vars": {
     "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
     "NBA_BOX_SCORE_URL": "https://cdn.nba.com/static/json/liveData/boxscore",
     "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
+    "CACHE_PURGE_ORIGIN": "https://fossil-beans.com",
     // PURGE_SECRET is overridden by `wrangler secret put PURGE_SECRET` in
     // production. The local-dev value below is fine for `vite dev` because
     // local caches.default is in-memory.
-    "PURGE_SECRET": "local-dev-purge-secret"
-  }
+    "PURGE_SECRET": "local-dev-purge-secret",
+  },
 }

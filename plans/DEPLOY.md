@@ -63,18 +63,6 @@ Seed teams:
 pnpm seed:teams:remote
 ```
 
-Seed games. For real production use:
-
-```bash
-pnpm seed:games:remote
-```
-
-If there are no games today and you just want test data in production:
-
-```bash
-./scripts/insert-games.sh --remote 2026-04-12
-```
-
 Cloudflare docs: `d1 migrations apply` applies unapplied migrations; `--remote` targets the remote DB. Source: https://developers.cloudflare.com/d1/wrangler-commands/#d1-migrations-apply
 
 **Deploy**
@@ -105,6 +93,14 @@ If you seeded after deploy, purge the production cache:
 PURGE_URL=https://fossil-beans.<your-subdomain>.workers.dev \
 PURGE_SECRET=<same-secret-you-put-in-cloudflare> \
 pnpm seed:games:remote
+```
+
+If there are no games today and you just want test data in production:
+
+```bash
+PURGE_URL=https://fossil-beans.<your-subdomain>.workers.dev \
+PURGE_SECRET=<same-secret-you-put-in-cloudflare> \
+./scripts/insert-games.sh --remote 2026-04-12
 ```
 
 **Optional Later**
