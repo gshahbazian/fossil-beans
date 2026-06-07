@@ -11,6 +11,8 @@ const startHandler = createStartHandler(defaultStreamHandler)
 const edgeCache = (caches as unknown as { default: Cache }).default
 
 const CACHEABLE_PATHS = new Set(['/'])
+const POSTHOG_INGEST_PATH = '/ingest'
+const POSTHOG_INGEST_ORIGIN = 'https://us.i.posthog.com'
 const shouldUseEdgeCache = import.meta.env.PROD
 
 export default {
@@ -20,6 +22,10 @@ export default {
     ctx: ExecutionContext
   ): Promise<Response> {
     const url = new URL(request.url)
+
+    if (isPostHogIngestPath(url.pathname)) {
+      return handlePostHogIngest(request, url)
+    }
 
     if (url.pathname === '/api/purge-cache' && request.method === 'POST') {
       return handlePurge(request, url)
@@ -37,6 +43,29 @@ export default {
   },
 }
 
+function handlePostHogIngest(request: Request, requestUrl: URL) {
+  const path = requestUrl.pathname.slice(POSTHOG_INGEST_PATH.length) || '/'
+  const url = new URL(path + requestUrl.search, POSTHOG_INGEST_ORIGIN)
+  const headers = new Headers(request.headers)
+  headers.delete('cookie')
+
+  return fetch(
+    new Request(url, {
+      body: request.body,
+      duplex: 'half',
+      headers,
+      method: request.method,
+      redirect: 'manual',
+    } as RequestInit & { duplex: 'half' })
+  )
+}
+
+function isPostHogIngestPath(pathname: string) {
+  if (pathname === POSTHOG_INGEST_PATH) return true
+
+  return pathname.startsWith(`${POSTHOG_INGEST_PATH}/`)
+}
+
 async function handleCachedGet(request: Request, ctx: ExecutionContext) {
   const cache = edgeCache
 
@@ -51,7 +80,10 @@ async function handleCachedGet(request: Request, ctx: ExecutionContext) {
 
   const response = await startHandler(request)
 
-  if (response.ok && response.headers.get('cache-control')?.includes('s-maxage')) {
+  if (
+    response.ok &&
+    response.headers.get('cache-control')?.includes('s-maxage')
+  ) {
     const toCache = new Response(response.clone().body, response)
     ctx.waitUntil(cache.put(request, toCache))
   }
@@ -63,7 +95,10 @@ async function handleCachedGet(request: Request, ctx: ExecutionContext) {
   })
 }
 
-async function handlePurge(request: Request, requestUrl: URL): Promise<Response> {
+async function handlePurge(
+  request: Request,
+  requestUrl: URL
+): Promise<Response> {
   const secret = (env as { PURGE_SECRET?: string }).PURGE_SECRET
   if (!secret) {
     return Response.json(
@@ -91,6 +126,11 @@ async function handlePurge(request: Request, requestUrl: URL): Promise<Response>
 
 function appendCacheHit(headers: Headers, hit: boolean): Headers {
   const out = new Headers(headers)
-  out.set('x-fb-cache', hit ? 'HIT' : 'MISS')
+  if (hit) {
+    out.set('x-fb-cache', 'HIT')
+    return out
+  }
+
+  out.set('x-fb-cache', 'MISS')
   return out
 }

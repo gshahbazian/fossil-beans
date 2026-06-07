@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 #
-# Fetch today's NBA box scores and upsert them into D1, then purge the edge
-# cache for the home page so the next request re-renders against fresh data.
+# Fetch NBA box scores for today or a specific date and upsert them into D1,
+# then purge the edge cache for the home page so the next request re-renders
+# against fresh data.
 #
 # Usage:
-#   ./scripts/insert-todays-games.sh --local
-#   ./scripts/insert-todays-games.sh --remote
-#   ./scripts/insert-todays-games.sh --local 2025-01-15
-#   ./scripts/insert-todays-games.sh --remote 2025-01-15
+#   ./scripts/insert-games.sh --local
+#   ./scripts/insert-games.sh --remote
+#   ./scripts/insert-games.sh --local 2025-01-15
+#   ./scripts/insert-games.sh --remote 2025-01-15
 #
 # Cache purge is best-effort. It uses these env vars (with sensible local
 # defaults):
@@ -17,7 +18,7 @@
 # For --remote you'll usually want:
 #   PURGE_URL=https://your-deploy.example.com \
 #   PURGE_SECRET=$(op read ...) \
-#   ./scripts/insert-todays-games.sh --remote
+#   ./scripts/insert-games.sh --remote
 #
 set -euo pipefail
 

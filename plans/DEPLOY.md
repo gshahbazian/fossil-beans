@@ -72,7 +72,7 @@ pnpm seed:games:remote
 If there are no games today and you just want test data in production:
 
 ```bash
-./scripts/insert-todays-games.sh --remote 2026-04-12 --debug
+./scripts/insert-games.sh --remote 2026-04-12
 ```
 
 Cloudflare docs: `d1 migrations apply` applies unapplied migrations; `--remote` targets the remote DB. Source: https://developers.cloudflare.com/d1/wrangler-commands/#d1-migrations-apply

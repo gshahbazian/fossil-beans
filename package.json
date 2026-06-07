@@ -17,8 +17,8 @@
     "db:studio": "drizzle-kit studio",
     "seed:teams:local": "./scripts/insert-teams.sh --local",
     "seed:teams:remote": "./scripts/insert-teams.sh --remote",
-    "seed:games:local": "./scripts/insert-todays-games.sh --local",
-    "seed:games:remote": "./scripts/insert-todays-games.sh --remote",
+    "seed:games:local": "./scripts/insert-games.sh --local",
+    "seed:games:remote": "./scripts/insert-games.sh --remote",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache"
   },

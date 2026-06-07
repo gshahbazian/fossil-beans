@@ -17,6 +17,7 @@ export default function GameStats({
   )
 
   const posthog = usePostHog()
+  const headerRef = useRef<HTMLDivElement>(null)
 
   const onPlayerClicked = useCallback(
     (player: GamePlayerStat) => {
@@ -31,11 +32,10 @@ export default function GameStats({
     [posthog]
   )
 
-  const headerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!headerRef.current) return
+    const header = headerRef.current
+    if (!header) return
 
-    // GABE: this isnt working correctly if the page starts scrolled to the bottom and you scroll up
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
         if (!entries[0]) return
@@ -48,12 +48,12 @@ export default function GameStats({
       },
       { threshold: [1] }
     )
-    intersectionObserver.observe(headerRef.current)
+    intersectionObserver.observe(header)
 
     return () => {
       intersectionObserver.disconnect()
     }
-  }, [headerRef])
+  }, [])
 
   return (
     <div className="relative col-span-full grid grid-cols-subgrid gap-y-8">

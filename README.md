@@ -32,7 +32,7 @@ Sharable NBA box scores.
    pnpm seed:teams:local
    pnpm seed:games:local
    # or a specific PST date:
-   ./scripts/insert-todays-games.sh --local 2025-01-15
+   ./scripts/insert-games.sh --local 2025-01-15
    ```
 
 4. Run the dev server:
@@ -80,8 +80,8 @@ Sharable NBA box scores.
 | `pnpm db:generate`           | Generate a new drizzle migration from schema changes |
 | `pnpm seed:teams:local`      | Insert the 30 NBA teams into local D1                |
 | `pnpm seed:teams:remote`     | Insert the 30 NBA teams into remote D1               |
-| `pnpm seed:games:local`      | Fetch and insert today's NBA games (local D1)        |
-| `pnpm seed:games:remote`     | Fetch and insert today's NBA games (remote D1)       |
+| `pnpm seed:games:local`      | Fetch and insert NBA games for today (local D1)      |
+| `pnpm seed:games:remote`     | Fetch and insert NBA games for today (remote D1)     |
 | `pnpm check`                 | Type-check                                           |
 
 ## Caching
@@ -101,7 +101,7 @@ This is the equivalent of the old Next.js `cacheLife('days')` setup.
 
 ### Invalidation
 
-The `seed:games` script (`scripts/insert-todays-games.sh`) calls
+The `seed:games` script (`scripts/insert-games.sh`) calls
 `POST /api/purge-cache` after upserting new game data so the next request
 re-renders. The endpoint is auth-gated by the `PURGE_SECRET` worker var.
 

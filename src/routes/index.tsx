@@ -7,6 +7,9 @@ import {
   getPSTDateOfLatestGame,
 } from '@/server/db/queries'
 
+const PRODUCTION_CACHE_CONTROL =
+  'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
+
 const loadHomeData = createServerFn().handler(async () => {
   const pstDate = await getPSTDateOfLatestGame()
   if (!pstDate) {
@@ -28,13 +31,17 @@ export const Route = createFileRoute('/')({
   loader: () => loadHomeData(),
   component: HomePage,
   headers: () => ({
-    'Cache-Control': import.meta.env.PROD
-      ? 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
-      : 'no-store',
+    'Cache-Control': getCacheControlHeader(),
   }),
 })
 
 function HomePage() {
   const { pstDate, games } = Route.useLoaderData()
   return <GamesPage pstDate={pstDate} games={games} />
+}
+
+function getCacheControlHeader() {
+  if (!import.meta.env.PROD) return 'no-store'
+
+  return PRODUCTION_CACHE_CONTROL
 }

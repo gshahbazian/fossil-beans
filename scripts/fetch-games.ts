@@ -7,11 +7,7 @@
  *   tsx scripts/fetch-games.ts                   # today
  *   tsx scripts/fetch-games.ts --date 2025-01-15 # specific PST date
  */
-import {
-  BoxScore,
-  ForbiddenError,
-  fetchBoxScore,
-} from './lib/nba/box-scores'
+import { BoxScore, ForbiddenError, fetchBoxScore } from './lib/nba/box-scores'
 import { fetchGames } from './lib/nba/game-log'
 import { fetchTodayScoreboard } from './lib/nba/today-scoreboard'
 

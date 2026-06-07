@@ -5,13 +5,14 @@ import { useRouterState } from '@tanstack/react-router'
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined
+const DEFAULT_POSTHOG_HOST = '/ingest'
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!POSTHOG_KEY) return
 
     posthog.init(POSTHOG_KEY, {
-      api_host: POSTHOG_HOST ?? 'https://us.i.posthog.com',
+      api_host: POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
       capture_pageview: false,
       capture_pageleave: true,
     })
@@ -32,10 +33,19 @@ function PostHogPageView() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || !posthog) return
-    let url = window.location.origin + pathname
-    if (search) url += search.startsWith('?') ? search : `?${search}`
-    posthog.capture('$pageview', { $current_url: url })
+
+    posthog.capture('$pageview', {
+      $current_url: getPageViewUrl(pathname, search),
+    })
   }, [pathname, search, posthog])
 
   return null
+}
+
+function getPageViewUrl(pathname: string, search: string) {
+  const origin = window.location.origin
+  if (!search) return origin + pathname
+  if (search.startsWith('?')) return origin + pathname + search
+
+  return `${origin}${pathname}?${search}`
 }

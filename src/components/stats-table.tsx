@@ -11,7 +11,6 @@ import { type GamePlayerStat } from '@/server/db/queries'
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -80,15 +79,19 @@ function NumberCell({ children }: { children: React.ReactNode }) {
   return <TableCell className="text-right font-mono">{children}</TableCell>
 }
 
-function PercentageValue({
+function PercentageCell({
   numerator,
   denominator,
 }: {
   numerator: number
   denominator: number
 }) {
+  if (denominator <= 0) {
+    return <NumberCell>-</NumberCell>
+  }
+
   return (
-    <TooltipProvider>
+    <NumberCell>
       <Tooltip>
         <TooltipTrigger>
           <span>{formatPercentage(numerator, denominator)}</span>
@@ -99,7 +102,7 @@ function PercentageValue({
           </span>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>
+    </NumberCell>
   )
 }
 
@@ -133,26 +136,14 @@ function StatRow({
       <NumberCell>{stat.assists}</NumberCell>
       <NumberCell>{stat.steals}</NumberCell>
       <NumberCell>{stat.blocks}</NumberCell>
-      <NumberCell>
-        {stat.fieldGoalsAttempted && stat.fieldGoalsAttempted > 0 ? (
-          <PercentageValue
-            numerator={stat.fieldGoalsMade ?? 0}
-            denominator={stat.fieldGoalsAttempted}
-          />
-        ) : (
-          <span>-</span>
-        )}
-      </NumberCell>
-      <NumberCell>
-        {stat.freeThrowsAttempted && stat.freeThrowsAttempted > 0 ? (
-          <PercentageValue
-            numerator={stat.freeThrowsMade ?? 0}
-            denominator={stat.freeThrowsAttempted}
-          />
-        ) : (
-          <span>-</span>
-        )}
-      </NumberCell>
+      <PercentageCell
+        numerator={stat.fieldGoalsMade ?? 0}
+        denominator={stat.fieldGoalsAttempted ?? 0}
+      />
+      <PercentageCell
+        numerator={stat.freeThrowsMade ?? 0}
+        denominator={stat.freeThrowsAttempted ?? 0}
+      />
       <NumberCell>{stat.turnovers}</NumberCell>
     </TableRow>
   )
