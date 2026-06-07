@@ -28,8 +28,9 @@ export const Route = createFileRoute('/')({
   loader: () => loadHomeData(),
   component: HomePage,
   headers: () => ({
-    'Cache-Control':
-      'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800',
+    'Cache-Control': import.meta.env.PROD
+      ? 'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
+      : 'no-store',
   }),
 })
 

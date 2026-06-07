@@ -11,6 +11,7 @@ const startHandler = createStartHandler(defaultStreamHandler)
 const edgeCache = (caches as unknown as { default: Cache }).default
 
 const CACHEABLE_PATHS = new Set(['/'])
+const shouldUseEdgeCache = import.meta.env.PROD
 
 export default {
   async fetch(
@@ -24,7 +25,11 @@ export default {
       return handlePurge(request, url)
     }
 
-    if (request.method === 'GET' && CACHEABLE_PATHS.has(url.pathname)) {
+    if (
+      shouldUseEdgeCache &&
+      request.method === 'GET' &&
+      CACHEABLE_PATHS.has(url.pathname)
+    ) {
       return handleCachedGet(request, ctx)
     }
 
