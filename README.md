@@ -17,6 +17,12 @@ Sharable NBA box scores.
    pnpm install
    ```
 
+   Then create your local secrets file:
+
+   ```sh
+   cp .dev.vars.example .dev.vars
+   ```
+
 2. Create a local D1 database and apply migrations:
 
    ```sh
@@ -116,14 +122,18 @@ This is the equivalent of the old Next.js `cacheLife('days')` setup.
 The `seed:games` script (`scripts/insert-games.sh`) calls
 `POST /api/insert-games`, which upserts new game data through Drizzle and then
 purges the cached home page so the next request re-renders. The endpoint is
-auth-gated by the `PURGE_SECRET` worker var.
+auth-gated by the `PURGE_SECRET` secret.
 
 - Local dev: `PURGE_URL` and `PURGE_SECRET` default to
   `http://localhost:3000` and `local-dev-purge-secret` (the value in
-  `wrangler.jsonc`). Run `pnpm dev` before `pnpm seed:games:local`.
-- Production: set the real secret with `wrangler secret put PURGE_SECRET`
-  (this shadows the dev default declared in `wrangler.jsonc`), then run
+  `.dev.vars.example`). Copy it to `.dev.vars` and run `pnpm dev` before
+  `pnpm seed:games:local`.
+- Production: set the secret with `wrangler secret put PURGE_SECRET` (it is not
+  declared in `wrangler.jsonc`, so it is never overwritten on deploy), then run
   the seed script with `PURGE_URL=https://your-host PURGE_SECRET=...`.
+
+The scheduled cron purges using the `CACHE_PURGE_ORIGIN` var, which must exactly
+match the origin the site is served from (see `wrangler.jsonc`).
 
 You can also manually purge from anywhere:
 

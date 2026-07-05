@@ -6,9 +6,7 @@ import {
   getGamePlayerStats,
   getPSTDateOfLatestGame,
 } from '@/server/db/queries'
-
-const PRODUCTION_CACHE_CONTROL =
-  'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
+import { PRODUCTION_CACHE_CONTROL } from '@/lib/cache-control'
 
 const loadHomeData = createServerFn().handler(async () => {
   const pstDate = await getPSTDateOfLatestGame()
@@ -24,7 +22,12 @@ const loadHomeData = createServerFn().handler(async () => {
     }))
   )
 
-  return { pstDate, games: gamesWithStats }
+  // Only surface games that actually have player stats; drop empty ones here so
+  // they are never serialized to the client.
+  return {
+    pstDate,
+    games: gamesWithStats.filter((game) => game.stats.length > 0),
+  }
 })
 
 export const Route = createFileRoute('/')({

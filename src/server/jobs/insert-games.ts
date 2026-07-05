@@ -2,9 +2,9 @@ import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '@/server/db/schema'
 import { games, playerStats, players } from '@/server/db/schema'
+import { fetchGameIdsForDate } from '@/server/nba/game-log'
 
 const NBA_BOX_SCORE_URL = 'https://cdn.nba.com/static/json/liveData/boxscore'
-const NBA_GAME_LOG_URL = 'https://stats.nba.com/stats/leaguegamelog'
 const NBA_SCOREBOARD_URL =
   'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json'
 const NBA_HEADERS = {
@@ -39,20 +39,6 @@ type TodayScoreboard = {
   scoreboard: {
     games: ScoreboardGame[]
   }
-}
-
-type ResultSet = {
-  name: string
-  headers: string[]
-  rowSet: unknown[][]
-}
-
-type LeagueGameLog = {
-  resultSets: ResultSet[]
-}
-
-type GameLogEntry = {
-  GAME_ID: string
 }
 
 type PlayerStatLine = {
@@ -152,7 +138,10 @@ async function getGameIds(env: InsertGamesEnv, options: InsertGamesOptions) {
   }
 
   if (options.date) {
-    return await fetchGameIdsForDate(env, options.date)
+    return await fetchGameIdsForDate(options.date, {
+      baseUrl: env.NBA_GAME_LOG_URL,
+      timeoutMs: NBA_FETCH_TIMEOUT_MS,
+    })
   }
 
   return await fetchTodayGameIds(env)
@@ -172,47 +161,6 @@ async function fetchTodayGameIds(env: InsertGamesEnv) {
 
   const data = (await response.json()) as TodayScoreboard
   return Array.from(new Set(data.scoreboard.games.map((game) => game.gameId)))
-}
-
-async function fetchGameIdsForDate(env: InsertGamesEnv, date: string) {
-  assertDateString(date)
-
-  const url = new URL(env.NBA_GAME_LOG_URL ?? NBA_GAME_LOG_URL)
-  url.search = new URLSearchParams({
-    Counter: '1000',
-    DateFrom: formatGameLogDate(date),
-    DateTo: formatGameLogDate(date),
-    Direction: 'DESC',
-    ISTRound: '',
-    LeagueID: '00',
-    PlayerOrTeam: 'T',
-    Season: '2025-26',
-    SeasonType: 'Regular Season',
-    Sorter: 'DATE',
-  }).toString()
-
-  const response = await fetchNba(url, { headers: NBA_HEADERS })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch NBA game log: ${response.status}`)
-  }
-
-  const data = (await response.json()) as LeagueGameLog
-  return Array.from(new Set(parseGameLog(data).map((game) => game.GAME_ID)))
-}
-
-function parseGameLog(data: LeagueGameLog) {
-  const resultSet = data.resultSets.find((set) => set.name === 'LeagueGameLog')
-  if (!resultSet) {
-    throw new Error('LeagueGameLog result set not found')
-  }
-
-  return resultSet.rowSet.map((row) => {
-    const entry: Record<string, unknown> = {}
-    for (const [index, header] of resultSet.headers.entries()) {
-      entry[header] = row[index]
-    }
-    return entry as GameLogEntry
-  })
 }
 
 async function fetchBoxScores(env: InsertGamesEnv, gameIds: string[]) {
@@ -474,22 +422,6 @@ function formatPSTDate(date: Date) {
   const month = parts.find((part) => part.type === 'month')!.value
   const day = parts.find((part) => part.type === 'day')!.value
   return `${year}-${month}-${day}`
-}
-
-function formatGameLogDate(date: string) {
-  const parsed = new Date(`${date}T12:00:00-07:00`)
-  return parsed.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric',
-    timeZone: 'America/Los_Angeles',
-  })
-}
-
-function assertDateString(date: string) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return
-
-  throw new Error(`Invalid date "${date}". Expected YYYY-MM-DD.`)
 }
 
 function chunkRows<T>(rows: T[], size: number) {

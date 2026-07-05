@@ -24,10 +24,16 @@
     "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
     "NBA_BOX_SCORE_URL": "https://cdn.nba.com/static/json/liveData/boxscore",
     "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
+    // MUST exactly match the origin (scheme + host) the site is served from,
+    // because the scheduled cron builds cache keys from it. On *.workers.dev
+    // set this to the deployed workers.dev URL; once a custom domain is
+    // attached, set it to that domain. A mismatch makes cron cache purges a
+    // silent no-op (stale home page until s-maxage expires).
     "CACHE_PURGE_ORIGIN": "https://fossil-beans.com",
-    // PURGE_SECRET is overridden by `wrangler secret put PURGE_SECRET` in
-    // production. The local-dev value below is fine for `vite dev` because
-    // local caches.default is in-memory.
-    "PURGE_SECRET": "local-dev-purge-secret",
   },
+  // PURGE_SECRET is intentionally NOT declared here. A plaintext `vars` entry
+  // overrides a `wrangler secret put` value on deploy, which would reset the
+  // token to a known constant and leave the write endpoints open. Set it as a
+  // secret in production (`wrangler secret put PURGE_SECRET`) and in `.dev.vars`
+  // for local development (see `.dev.vars.example`).
 }

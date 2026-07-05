@@ -3,6 +3,7 @@ import {
   defaultStreamHandler,
 } from '@tanstack/react-start/server'
 import { insertGames } from './server/jobs/insert-games'
+import { PRODUCTION_CACHE_CONTROL } from './lib/cache-control'
 
 const startHandler = createStartHandler(defaultStreamHandler)
 
@@ -99,18 +100,24 @@ async function handleCachedGet(request: Request, ctx: ExecutionContext) {
 
   const response = await startHandler(request)
 
-  if (
-    response.ok &&
-    response.headers.get('cache-control')?.includes('s-maxage')
-  ) {
-    const toCache = new Response(response.clone().body, response)
+  // This path only runs for known-cacheable GET paths in production, so the
+  // Worker is authoritative for the edge Cache-Control rather than depending on
+  // the route `headers` surviving the SSR handler.
+  const headers = new Headers(response.headers)
+  if (response.ok) {
+    headers.set('cache-control', PRODUCTION_CACHE_CONTROL)
+    const toCache = new Response(response.clone().body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    })
     ctx.waitUntil(cache.put(request, toCache))
   }
 
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: appendCacheHit(response.headers, false),
+    headers: appendCacheHit(headers, false),
   })
 }
 

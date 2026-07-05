@@ -1,0 +1,7 @@
+# Copy to `.dev.vars` for local development (git-ignored). `wrangler`/`vite dev`
+# load this automatically.
+#
+# Bearer token that gates POST /api/insert-games and /api/purge-cache. The seed
+# script (scripts/insert-games.sh) defaults to this value for --local runs.
+# In production set it as a secret instead: `wrangler secret put PURGE_SECRET`.
+PURGE_SECRET="local-dev-purge-secret"

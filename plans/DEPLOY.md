@@ -39,11 +39,15 @@ Cloudflare docs: `d1 create` creates a remote D1 DB and returns the binding/UUID
 pnpm exec wrangler secret put PURGE_SECRET
 ```
 
-Use a random value. Save it somewhere because your remote seed script needs it to purge the cached home page after new data lands.
+Use a random value. Save it somewhere because your remote seed script needs it to purge the cached home page after new data lands. `PURGE_SECRET` is deliberately kept out of `wrangler.jsonc` `vars` (a plaintext var would overwrite this secret on every deploy), so this step is required — the write endpoints return 503 until it is set.
 
 Cloudflare docs: secrets are added with `wrangler secret put`. Source: https://developers.cloudflare.com/workers/configuration/secrets/
 
-5. Regenerate/check types:
+5. Point `CACHE_PURGE_ORIGIN` at your real serving origin:
+
+Edit `wrangler.jsonc` so `vars.CACHE_PURGE_ORIGIN` exactly matches the origin the site is served from — the `https://fossil-beans.<subdomain>.workers.dev` URL if you have no custom domain yet, or your custom domain once attached. The scheduled cron builds cache keys from this value; if it doesn't match, cron cache purges silently do nothing and the home page serves stale data until `s-maxage` expires.
+
+6. Regenerate/check types:
 
 ```bash
 pnpm check

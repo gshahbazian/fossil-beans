@@ -7,7 +7,8 @@ import {
 import { type GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import { VisuallyHidden } from 'radix-ui'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
-import { formatPercentage } from '@/lib/format-percentage'
+import { formatShootingPercentage } from '@/lib/format-percentage'
+import { formatPstShortDate } from '@/lib/format-date'
 import { getTeamColors } from '@/lib/team-colors'
 import { cn } from '@/lib/utils'
 import { type Player, type Team } from '@/server/db/schema'
@@ -161,7 +162,7 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
 }
 
 function GameBar({ gameWithTeams }: { gameWithTeams: GameWithTeams }) {
-  const gameDate = formatGameDate(gameWithTeams.gameTime)
+  const gameDate = formatPstShortDate(gameWithTeams.gameTime)
 
   return (
     <div className="flex items-center justify-between bg-black px-2 py-3 text-white sm:px-5">
@@ -232,7 +233,7 @@ function ShootingStatBar({
   made: number
   attempted: number
 }) {
-  const percentage = getShootingPercentage(made, attempted)
+  const percentage = formatShootingPercentage(made, attempted)
   const barWidth = getShootingBarWidth(made, attempted)
   const barMinWidth = made > 0 ? '4px' : '0'
 
@@ -296,20 +297,6 @@ function getPlayerTeam(game: GameWithTeams, playerTeamId: number): Team {
   if (game.homeTeam.teamId === playerTeamId) return game.homeTeam
 
   return game.awayTeam
-}
-
-function formatGameDate(gameTime: Date): string {
-  return gameTime.toLocaleString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'America/Los_Angeles',
-  })
-}
-
-function getShootingPercentage(made: number, attempted: number) {
-  if (attempted <= 0) return '-'
-
-  return `${formatPercentage(made, attempted)}%`
 }
 
 function getShootingBarWidth(made: number, attempted: number) {
