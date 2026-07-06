@@ -5,6 +5,10 @@
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server-entry.ts",
   "observability": { "enabled": true },
+  // Native Workers Cache: sits in front of this Worker and caches responses per
+  // their `Cache-Control` header (the home route sets s-maxage), serving hits
+  // without running the Worker. Invalidated via `cache.purge()` after inserts.
+  "cache": { "enabled": true },
   "triggers": {
     // Disabled. To enable, move the schedule from the comment into the array.
     // Every 30 min during NBA game hours in UTC (17:00–23:59 and 00:00–09:59):
@@ -27,12 +31,6 @@
     "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
     "NBA_BOX_SCORE_URL": "https://cdn.nba.com/static/json/liveData/boxscore",
     "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
-    // MUST exactly match the origin (scheme + host) the site is served from,
-    // because the scheduled cron builds cache keys from it. On *.workers.dev
-    // set this to the deployed workers.dev URL; once a custom domain is
-    // attached, set it to that domain. A mismatch makes cron cache purges a
-    // silent no-op (stale home page until s-maxage expires).
-    "CACHE_PURGE_ORIGIN": "https://fossil-beans.com",
   },
   // PURGE_SECRET is intentionally NOT declared here. A plaintext `vars` entry
   // overrides a `wrangler secret put` value on deploy, which would reset the

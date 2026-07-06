@@ -2,37 +2,30 @@ import {
   createStartHandler,
   defaultStreamHandler,
 } from '@tanstack/react-start/server'
+import { cache } from 'cloudflare:workers'
 import { insertGames } from './server/jobs/insert-games'
-import { PRODUCTION_CACHE_CONTROL } from './lib/cache-control'
 
 const startHandler = createStartHandler(defaultStreamHandler)
 
-// `caches.default` is a Cloudflare-specific extension to the standard
-// CacheStorage interface that the DOM lib also declares; cast once here.
-const edgeCache = (caches as unknown as { default: Cache }).default
-
-const CACHEABLE_PATHS = new Set(['/'])
 const INSERT_GAMES_PATH = '/api/insert-games'
 const POSTHOG_INGEST_PATH = '/ingest'
 const POSTHOG_INGEST_ORIGIN = 'https://us.i.posthog.com'
-const shouldUseEdgeCache = import.meta.env.PROD
 
 type WorkerEnv = {
   DB: D1Database
   ASSETS: Fetcher
-  CACHE_PURGE_ORIGIN?: string
   NBA_BOX_SCORE_URL?: string
   NBA_GAME_LOG_URL?: string
   NBA_SCOREBOARD_URL?: string
   PURGE_SECRET?: string
 }
 
+// Edge caching is handled by Cloudflare's native Workers Cache (enabled via
+// `cache` in wrangler.jsonc). It sits in front of this Worker and caches
+// responses per their `Cache-Control` header without running the Worker on a
+// hit — so the fetch handler only routes; it does not manage the cache.
 export default {
-  async fetch(
-    request: Request,
-    workerEnv: WorkerEnv,
-    ctx: ExecutionContext
-  ): Promise<Response> {
+  async fetch(request: Request, workerEnv: WorkerEnv): Promise<Response> {
     const url = new URL(request.url)
 
     if (isPostHogIngestPath(url.pathname)) {
@@ -40,19 +33,11 @@ export default {
     }
 
     if (url.pathname === '/api/purge-cache' && request.method === 'POST') {
-      return handlePurge(request, url, workerEnv)
+      return handlePurge(request, workerEnv)
     }
 
     if (url.pathname === INSERT_GAMES_PATH && request.method === 'POST') {
       return handleInsertGames(request, url, workerEnv)
-    }
-
-    if (
-      shouldUseEdgeCache &&
-      request.method === 'GET' &&
-      CACHEABLE_PATHS.has(url.pathname)
-    ) {
-      return handleCachedGet(request, ctx)
     }
 
     return startHandler(request)
@@ -86,44 +71,8 @@ function isPostHogIngestPath(pathname: string) {
   return pathname.startsWith(`${POSTHOG_INGEST_PATH}/`)
 }
 
-async function handleCachedGet(request: Request, ctx: ExecutionContext) {
-  const cache = edgeCache
-
-  const cached = await cache.match(request)
-  if (cached) {
-    return new Response(cached.body, {
-      status: cached.status,
-      statusText: cached.statusText,
-      headers: appendCacheHit(cached.headers, true),
-    })
-  }
-
-  const response = await startHandler(request)
-
-  // This path only runs for known-cacheable GET paths in production, so the
-  // Worker is authoritative for the edge Cache-Control rather than depending on
-  // the route `headers` surviving the SSR handler.
-  const headers = new Headers(response.headers)
-  if (response.ok) {
-    headers.set('cache-control', PRODUCTION_CACHE_CONTROL)
-    const toCache = new Response(response.clone().body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    })
-    ctx.waitUntil(cache.put(request, toCache))
-  }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: appendCacheHit(headers, false),
-  })
-}
-
 async function handlePurge(
   request: Request,
-  requestUrl: URL,
   workerEnv: WorkerEnv
 ): Promise<Response> {
   const unauthorized = getUnauthorizedResponse(request, workerEnv)
@@ -131,8 +80,7 @@ async function handlePurge(
     return unauthorized
   }
 
-  const origin = `${requestUrl.protocol}//${requestUrl.host}`
-  const purged = await purgeCachedPaths(origin)
+  const purged = await purgeSiteCache()
 
   return Response.json({ ok: true, purged })
 }
@@ -152,8 +100,7 @@ async function handleInsertGames(
 
   try {
     const result = await insertGames(workerEnv, { date, gameIds })
-    const origin = `${requestUrl.protocol}//${requestUrl.host}`
-    const purged = await purgeCachedPaths(origin)
+    const purged = await purgeSiteCache()
 
     return Response.json({ ok: true, ...result, purged })
   } catch (error) {
@@ -195,11 +142,32 @@ async function handleScheduled(
     })
 
     const result = await insertGames(workerEnv)
-    const purged = await purgeCachedPaths(workerEnv.CACHE_PURGE_ORIGIN)
+    const purged = await purgeSiteCache()
     console.log('Scheduled NBA game insert completed', { ...result, purged })
   } catch (error) {
     console.error('Scheduled NBA game insert failed', error)
     throw error
+  }
+}
+
+/**
+ * Invalidate this Worker's edge cache. The only response we mark cacheable is
+ * the home page, so purging everything the Worker cached invalidates it. Unlike
+ * the old `caches.default` approach this is global and needs no origin, so it
+ * works identically from the request handlers and the cron.
+ */
+async function purgeSiteCache() {
+  try {
+    const result = await cache.purge({ purgeEverything: true })
+    if (!result.success) {
+      console.error('Cache purge reported errors', result.errors)
+    }
+    return result.success
+  } catch (error) {
+    // Local dev (miniflare) may not implement the purge API; never let a purge
+    // failure break the insert that triggered it.
+    console.warn('Cache purge skipped', error)
+    return false
   }
 }
 
@@ -213,33 +181,4 @@ function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message
 
   return 'Unknown error'
-}
-
-async function purgeCachedPaths(origin: string | undefined) {
-  if (!origin) {
-    console.warn('CACHE_PURGE_ORIGIN is not configured; skipping cache purge')
-    return []
-  }
-
-  const cache = edgeCache
-  const purged: string[] = []
-
-  for (const path of CACHEABLE_PATHS) {
-    const url = new URL(path, origin)
-    const ok = await cache.delete(new Request(url))
-    if (ok) purged.push(path)
-  }
-
-  return purged
-}
-
-function appendCacheHit(headers: Headers, hit: boolean): Headers {
-  const out = new Headers(headers)
-  if (hit) {
-    out.set('x-fb-cache', 'HIT')
-    return out
-  }
-
-  out.set('x-fb-cache', 'MISS')
-  return out
 }

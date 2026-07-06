@@ -43,11 +43,7 @@ Use a random value. Save it somewhere because your remote seed script needs it t
 
 Cloudflare docs: secrets are added with `wrangler secret put`. Source: https://developers.cloudflare.com/workers/configuration/secrets/
 
-5. Point `CACHE_PURGE_ORIGIN` at your real serving origin:
-
-Edit `wrangler.jsonc` so `vars.CACHE_PURGE_ORIGIN` exactly matches the origin the site is served from — the `https://fossil-beans.<subdomain>.workers.dev` URL if you have no custom domain yet, or your custom domain once attached. The scheduled cron builds cache keys from this value; if it doesn't match, cron cache purges silently do nothing and the home page serves stale data until `s-maxage` expires.
-
-6. Regenerate/check types:
+5. Regenerate/check types:
 
 ```bash
 pnpm check

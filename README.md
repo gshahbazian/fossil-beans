@@ -104,36 +104,42 @@ Sharable NBA box scores.
 
 ## Caching
 
-The home route is server-rendered and then cached at the Cloudflare edge
-using the Worker [Cache API](https://developers.cloudflare.com/workers/runtime-apis/cache/).
-The flow:
+The home route is server-rendered and cached at the Cloudflare edge by the
+native [Workers Cache](https://blog.cloudflare.com/workers-cache/), enabled with
+`"cache": { "enabled": true }` in `wrangler.jsonc`. The flow:
 
-1. A request for `/` hits the worker (`src/server-entry.ts`).
-2. The worker checks `caches.default` for the URL. On hit (`x-fb-cache:
-HIT`), it returns the cached HTML without touching D1.
-3. On miss, it runs the TanStack Start handler (which queries D1, renders),
-   stores the response in `caches.default` honoring the route's
-   `Cache-Control: s-maxage=86400` header, and returns it.
+1. A request for `/` hits Cloudflare's cache _in front of_ the worker.
+2. On a hit, Cloudflare returns the cached HTML **without running the worker**
+   (no D1 query, no render).
+3. On a miss, the worker runs the TanStack Start handler, which returns the HTML
+   with the route's `Cache-Control` header
+   (`public, max-age=300, s-maxage=86400, stale-while-revalidate=604800`).
+   Cloudflare caches it per `s-maxage` and serves stale-while-revalidate on
+   subsequent misses.
 
-This is the equivalent of the old Next.js `cacheLife('days')` setup.
+This is the equivalent of the old Next.js `cacheLife('days')` setup, minus the
+hand-rolled `caches.default` logic we used before.
 
 ### Invalidation
 
 The `seed:games` script (`scripts/insert-games.sh`) calls
 `POST /api/insert-games`, which upserts new game data through Drizzle and then
-purges the cached home page so the next request re-renders. The endpoint is
+purges the edge cache so the next request re-renders. The endpoint is
 auth-gated by the `PURGE_SECRET` secret.
+
+Purging uses the Workers Cache API — `cache.purge({ purgeEverything: true })`
+via `cloudflare:workers`. Because the home page is the only cacheable response,
+this invalidates it. Unlike the old approach it is global and needs no origin,
+so the cron, the manual endpoint, and local dev all purge the same way.
 
 - Local dev: `PURGE_URL` and `PURGE_SECRET` default to
   `http://localhost:3000` and `local-dev-purge-secret` (the value in
   `.dev.vars.example`). Copy it to `.dev.vars` and run `pnpm dev` before
-  `pnpm seed:games:local`.
+  `pnpm seed:games:local`. (The local miniflare runtime may not implement
+  `cache.purge`; the purge is best-effort and never fails the insert.)
 - Production: set the secret with `wrangler secret put PURGE_SECRET` (it is not
   declared in `wrangler.jsonc`, so it is never overwritten on deploy), then run
   the seed script with `PURGE_URL=https://your-host PURGE_SECRET=...`.
-
-The scheduled cron purges using the `CACHE_PURGE_ORIGIN` var, which must exactly
-match the origin the site is served from (see `wrangler.jsonc`).
 
 You can also manually purge from anywhere:
 
