@@ -2,7 +2,7 @@
 
 The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complete. The remaining work is deployment setup, validation, and production hardening.
 
-## Required before staging deployment
+## Required before production deployment
 
 - [ ] Create the remote D1 database:
   ```bash
@@ -26,12 +26,15 @@ The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complet
   ```bash
   pnpm seed:teams:remote
   ```
-- [ ] Build and deploy a staging Worker:
+- [ ] Update `compatibility_date` in `wrangler.jsonc` to a current date and review the compatibility changes that become enabled.
+- [ ] Fix the production cache headers before relying on stale-while-revalidate. Cloudflare Workers Cache treats `s-maxage` as disabling stale-while-revalidate, so use the appropriate browser and Cloudflare CDN cache headers to express the intended browser TTL, edge TTL, and revalidation behavior.
+- [ ] Explicitly mark non-cacheable Worker responses such as `/ingest`, operational API responses, authentication failures, and framework error responses with an appropriate cache policy. With Workers Cache enabled, eligible responses without a `Cache-Control` header may receive heuristic TTLs.
+- [ ] Build and deploy the production Worker:
   ```bash
   pnpm deploy
   ```
 
-## Staging validation
+## Production deployment validation
 
 - [ ] Verify `/` renders correctly through SSR and hydrates without errors.
 - [ ] Verify game ordering, player-stat filtering, and stat ordering match the expected behavior.
@@ -42,7 +45,8 @@ The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complet
 - [ ] Verify authenticated game insertion and cache-purge endpoints reject missing or invalid bearer secrets.
 - [ ] Verify the Worker can reach the NBA endpoints without persistent 403 or timeout failures.
 - [ ] Verify the `/ingest` PostHog proxy works and strips cookies as intended.
-- [ ] Verify `Cache-Control`, stale-while-revalidate, and global cache-purge behavior on Cloudflare.
+- [ ] Verify the browser and Cloudflare-specific cache headers, stale-while-revalidate behavior, `Cf-Cache-Status`, and global cache-purge behavior on Cloudflare.
+- [ ] Verify that `/ingest`, operational API responses, authentication failures, and framework error responses are not cached.
 - [ ] Confirm whether `nodejs_compat` is required by the production bundle before considering its removal.
 
 ## Application decisions
@@ -50,12 +54,13 @@ The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complet
 - [ ] Decide whether operational POST handlers should remain in `src/server-entry.ts` or move to TanStack API/RPC routes. Preserve compatibility with existing non-browser callers.
 - [ ] Decide whether scheduled game ingestion should be enabled; `triggers.crons` is currently empty in `wrangler.jsonc`.
 - [ ] If cron is enabled, choose its schedule and verify concurrent scheduled/manual writes are safe.
-- [ ] Decide whether the current global cache-purge blast radius is acceptable.
-- [ ] Inspect the historical `next16` branch and compare behavior if exact parity with the former Next.js application is required.
+- [ ] Decide whether the current global cache-purge blast radius is acceptable. Workers Cache can cache eligible responses beyond the home page unless they explicitly opt out, so do not assume that `/` is the only entry affected by `purgeEverything`.
+- [ ] Compare behavior with `main`, which contains the former Next.js application, if exact parity is required.
 
 ## Tests and performance
 
 - [ ] Add automated coverage for server loaders, database filtering/ordering, protected endpoints, and cache headers.
+- [ ] Add Zod validation for NBA scoreboard, game-log, and box-score JSON before reading or persisting upstream data, with tests for malformed or changed response shapes.
 - [ ] Add an SSR/hydration smoke test for `/`.
 - [ ] Add browser tests for dialogs, tables, sticky headers, and analytics behavior.
 - [ ] Measure the home loader's one-player-stats-query-per-game fan-out and consolidate queries if needed.
@@ -66,7 +71,7 @@ The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complet
 
 - [ ] Choose and configure the production domain or confirm use of the `workers.dev` domain.
 - [ ] Set up CI/CD with build, typecheck, tests, migrations, and controlled deployment.
-- [ ] Configure separate staging and production Cloudflare environments and bindings.
+- [ ] Confirm that local development uses local D1 and `.dev.vars`, while the top-level Wrangler configuration and remote D1 binding are production-only. No staging deployment or staging Cloudflare environment is planned.
 - [ ] Define secret rotation and recovery procedures for `PURGE_SECRET`.
 - [ ] Add production monitoring, alerting, and an external log/error sink beyond console logging.
 - [ ] Confirm Cloudflare plan capabilities for D1, cron, observability, and cache purge.
