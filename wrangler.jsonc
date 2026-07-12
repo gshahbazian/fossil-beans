@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fossil-beans",
+  "compatibility_date": "2026-07-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "./src/server-entry.ts",
+  "observability": { "enabled": true },
+  // Native Workers Cache: sits in front of this Worker and caches responses per
+  // their `Cloudflare-CDN-Cache-Control` header, serving hits without running
+  // the Worker. Invalidated via `cache.purge()` after inserts.
+  "cache": { "enabled": true },
+  "triggers": {
+    // Disabled. To enable, move the schedule from the comment into the array.
+    // Every 30 min during NBA game hours in UTC (17:00–23:59 and 00:00–09:59):
+    // covers afternoon/holiday tip-offs through late west-coast finals (~1am PT).
+    "crons": [], // ["*/30 17-23,0-9 * * *"]
+  },
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fossil-beans",
+      "database_id": "469df9d3-ce24-4e94-858c-7458fbdd82f5",
+      "migrations_dir": "./drizzle",
+    },
+  ],
+  "vars": {
+    "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
+    "NBA_BOX_SCORE_URL": "https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData/boxscore",
+    "NBA_SCOREBOARD_URL": "https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData/scoreboard/todaysScoreboard_00.json",
+  },
+  // PURGE_SECRET is intentionally NOT declared here. A plaintext `vars` entry
+  // overrides a `wrangler secret put` value on deploy, which would reset the
+  // token to a known constant and leave the write endpoints open. Set it as a
+  // secret in production (`wrangler secret put PURGE_SECRET`) and in `.dev.vars`
+  // for local development (see `.dev.vars.example`).
+}

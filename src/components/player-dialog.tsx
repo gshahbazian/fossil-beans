@@ -4,15 +4,14 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
-import Image from 'next/image'
+import { type GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
 import { VisuallyHidden } from 'radix-ui'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
-import { formatPercentage } from '@/lib/format-percentage'
+import { formatShootingPercentage } from '@/lib/format-percentage'
+import { formatPstShortDate } from '@/lib/format-date'
 import { getTeamColors } from '@/lib/team-colors'
 import { cn } from '@/lib/utils'
-import { Player } from '@/server/db/schema'
-import { Team } from '@/server/db/schema'
+import { type Player, type Team } from '@/server/db/schema'
 
 declare module 'react' {
   interface CSSProperties {
@@ -36,11 +35,7 @@ export default function PlayerDialog({
     onClose()
   }
 
-  const playerTeam =
-    gameWithTeams.homeTeam.teamId === playerStat.teamId
-      ? gameWithTeams.homeTeam
-      : gameWithTeams.awayTeam
-
+  const playerTeam = getPlayerTeam(gameWithTeams, playerStat.teamId)
   const teamColors = getTeamColors(playerTeam.abbreviation)
 
   return (
@@ -91,9 +86,7 @@ export default function PlayerDialog({
               <StatCard label="TO" value={playerStat.turnovers ?? 0} />
               <StatCard
                 label="Min"
-                value={trimIntervalToMinsSecs(
-                  playerStat.minutesPlayed ?? '00:00'
-                )}
+                value={trimIntervalToMinsSecs(playerStat.minutesSeconds ?? 0)}
               />
             </div>
 
@@ -130,16 +123,14 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
   return (
     <div className="team-splash relative h-48 sm:h-56">
       <div className="pointer-events-none absolute inset-0 grid place-content-center overflow-hidden opacity-10">
-        <Image
+        <img
           src={`https://cdn.nba.com/logos/nba/${team.teamId}/global/L/logo.svg`}
           alt={`${team.abbreviation} logo`}
-          fill
-          className="scale-[2] object-contain"
-          unoptimized
+          className="absolute inset-0 h-full w-full scale-[2] object-contain"
         />
       </div>
 
-      <Image
+      <img
         src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${player.playerId}.png`}
         alt={`${player.playerName} headshot`}
         className="absolute right-0 bottom-0 w-54 object-contain sm:w-66"
@@ -171,6 +162,8 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
 }
 
 function GameBar({ gameWithTeams }: { gameWithTeams: GameWithTeams }) {
+  const gameDate = formatPstShortDate(gameWithTeams.gameTime)
+
   return (
     <div className="flex items-center justify-between bg-black px-2 py-3 text-white sm:px-5">
       <div className="flex items-center gap-1 sm:gap-3">
@@ -182,13 +175,7 @@ function GameBar({ gameWithTeams }: { gameWithTeams: GameWithTeams }) {
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
-        <span className="text-xs text-neutral-400">
-          {gameWithTeams.gameTime.toLocaleString('en-US', {
-            day: 'numeric',
-            month: 'short',
-            timeZone: 'America/Los_Angeles',
-          })}
-        </span>
+        <span className="text-xs text-neutral-400">{gameDate}</span>
         {gameWithTeams.gameStatus && (
           <span className="rounded-full bg-neutral-800 px-3 py-1 text-[0.625rem] font-bold tracking-wider text-neutral-300 uppercase">
             {gameWithTeams.gameStatus}
@@ -246,6 +233,10 @@ function ShootingStatBar({
   made: number
   attempted: number
 }) {
+  const percentage = formatShootingPercentage(made, attempted)
+  const barWidth = getShootingBarWidth(made, attempted)
+  const barMinWidth = made > 0 ? '4px' : '0'
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between">
@@ -253,16 +244,14 @@ function ShootingStatBar({
           {label}
         </span>
 
-        <span className="font-mono text-sm font-bold">
-          {attempted > 0 ? `${formatPercentage(made, attempted)}%` : '-'}
-        </span>
+        <span className="font-mono text-sm font-bold">{percentage}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
         <div
           className="shooting-stat-bar h-full rounded-full opacity-90"
           style={{
-            width: `${attempted > 0 ? (made / attempted) * 100 : 0}%`,
-            minWidth: made > 0 ? '4px' : '0',
+            width: barWidth,
+            minWidth: barMinWidth,
           }}
         />
       </div>
@@ -282,12 +271,10 @@ function TeamPill({
 }) {
   const logoCircle = (
     <div className="pointer-events-none relative size-6 shrink-0 rounded-full bg-white/10 p-0.5">
-      <Image
+      <img
         src={`https://cdn.nba.com/logos/nba/${team.teamId}/global/L/logo.svg`}
         alt={`${team.teamName} logo`}
-        fill
-        className="object-contain"
-        unoptimized
+        className="absolute inset-0 h-full w-full object-contain"
       />
     </div>
   )
@@ -304,4 +291,16 @@ function TeamPill({
       {logoPosition === 'right' && logoCircle}
     </div>
   )
+}
+
+function getPlayerTeam(game: GameWithTeams, playerTeamId: number): Team {
+  if (game.homeTeam.teamId === playerTeamId) return game.homeTeam
+
+  return game.awayTeam
+}
+
+function getShootingBarWidth(made: number, attempted: number) {
+  if (attempted <= 0) return '0%'
+
+  return `${(made / attempted) * 100}%`
 }

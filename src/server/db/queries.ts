@@ -1,36 +1,15 @@
-import { db } from '@/server/db/index'
-import { playerStats, games } from '@/server/db/schema'
-import { eq, desc, sql, asc, and } from 'drizzle-orm'
+import { getDb } from '@/server/db/index'
+import { games, playerStats } from '@/server/db/schema'
+import { eq, desc, asc, sql } from 'drizzle-orm'
 
-export async function getPSTTimeOfLatestGame() {
+export async function getPSTDateOfLatestGame() {
+  const db = getDb()
   const latestGame = await db.query.games.findFirst({
-    extras: {
-      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`.as(
-        'pstTime'
-      ),
-    },
-    columns: {},
+    columns: { pstDate: true },
     orderBy: desc(games.gameTime),
   })
 
-  if (!latestGame) return undefined
-  return latestGame.pstTime
-}
-
-export async function getPSTTimeOfLatestGameBefore(date: string) {
-  const latestGame = await db.query.games.findFirst({
-    where: sql`(game_time AT TIME ZONE 'America/Los_Angeles')::date < ${date}`,
-    extras: {
-      pstTime: sql<string>`game_time AT TIME ZONE 'America/Los_Angeles'`.as(
-        'pstTime'
-      ),
-    },
-    columns: {},
-    orderBy: desc(games.gameTime),
-  })
-
-  if (!latestGame) return undefined
-  return latestGame.pstTime
+  return latestGame?.pstDate
 }
 
 export type GameWithTeams = Awaited<
@@ -38,8 +17,9 @@ export type GameWithTeams = Awaited<
 >[number]
 
 export async function getAllGamesOnPSTDate(date: string) {
+  const db = getDb()
   return await db.query.games.findMany({
-    where: sql`${date} = (game_time AT TIME ZONE 'America/Los_Angeles')::date`,
+    where: eq(games.pstDate, date),
     with: {
       homeTeam: true,
       awayTeam: true,
@@ -53,17 +33,15 @@ export type GamePlayerStat = Awaited<
 >[number]
 
 export async function getGamePlayerStats(gameId: string) {
+  const db = getDb()
   return await db.query.playerStats.findMany({
-    where: and(
-      eq(games.gameId, gameId),
-      sql`EXTRACT(epoch FROM minutes_played) > 0`
-    ),
+    where: sql`${playerStats.gameId} = ${gameId} AND ${playerStats.minutesSeconds} > 0`,
     with: {
       player: true,
     },
     orderBy: [
       desc(playerStats.espnPoints),
-      desc(playerStats.minutesPlayed),
+      desc(playerStats.minutesSeconds),
       playerStats.playerId,
     ],
   })

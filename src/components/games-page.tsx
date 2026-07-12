@@ -1,17 +1,13 @@
 import GameStats from '@/components/game-stats'
-import { getGamePlayerStats, type GameWithTeams } from '@/server/db/queries'
+import { type GamePlayerStat, type GameWithTeams } from '@/server/db/queries'
+import { formatPstShortDate } from '@/lib/format-date'
 
-const formatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-})
-
-export default async function GamesPage({
+export default function GamesPage({
   pstDate,
   games,
 }: {
   pstDate?: string
-  games: GameWithTeams[]
+  games: Array<GameWithTeams & { stats: GamePlayerStat[] }>
 }) {
   return (
     <main className="grid w-screen grid-cols-[1fr_min(56rem,100%-1rem)_1fr] gap-x-2 gap-y-8 py-8">
@@ -19,23 +15,14 @@ export default async function GamesPage({
         NBA Lines{' '}
         {pstDate && (
           <span className="font-normal text-neutral-400">
-            {formatter.format(new Date(pstDate))}
+            {formatPstShortDate(new Date(`${pstDate}T12:00:00Z`))}
           </span>
         )}
       </h2>
 
       {games.map((game) => (
-        <GameEntry key={game.gameId} game={game} />
+        <GameStats key={game.gameId} game={game} stats={game.stats} />
       ))}
     </main>
   )
-}
-
-async function GameEntry({ game }: { game: GameWithTeams }) {
-  const stats = await getGamePlayerStats(game.gameId)
-
-  // GABE: add a nice 'starting soon' here
-  if (stats.length === 0) return null
-
-  return <GameStats game={game} stats={stats} />
 }
