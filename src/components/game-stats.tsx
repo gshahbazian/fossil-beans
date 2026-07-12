@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import PlayerDialog from '@/components/player-dialog'
-import { type GamePlayerStat, type GameWithTeams } from '@/server/db/queries'
+import { type HomeGame, type HomePlayerStat } from '@/lib/home-data'
 import StatsTable from '@/components/stats-table'
 import { usePostHog } from 'posthog-js/react'
 
@@ -8,11 +8,10 @@ export default function GameStats({
   game,
   stats,
 }: {
-  game: GameWithTeams
-  stats: GamePlayerStat[]
+  game: HomeGame
+  stats: HomePlayerStat[]
 }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedPlayer, setSelectedPlayer] = useState<GamePlayerStat | null>(
+  const [selectedPlayer, setSelectedPlayer] = useState<HomePlayerStat | null>(
     null
   )
 
@@ -20,9 +19,8 @@ export default function GameStats({
   const headerRef = useRef<HTMLDivElement>(null)
 
   const onPlayerClicked = useCallback(
-    (player: GamePlayerStat) => {
+    (player: HomePlayerStat) => {
       setSelectedPlayer(player)
-      setIsOpen(true)
 
       posthog?.capture('player_clicked', {
         player_name: player.player.playerName,
@@ -84,10 +82,9 @@ export default function GameStats({
 
       {selectedPlayer && (
         <PlayerDialog
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
+          onClose={() => setSelectedPlayer(null)}
           playerStat={selectedPlayer}
-          gameWithTeams={game}
+          game={game}
         />
       )}
     </div>

@@ -39,7 +39,6 @@ export const games = sqliteTable(
   (t) => [index('idx_games_pst_date').on(t.pstDate)]
 )
 
-export type Game = typeof games.$inferSelect
 export type GameInsert = typeof games.$inferInsert
 
 export const players = sqliteTable('players', {
@@ -53,7 +52,7 @@ export const players = sqliteTable('players', {
     .references(() => teams.teamId),
 })
 
-export type Player = typeof players.$inferSelect
+export type PlayerInsert = typeof players.$inferInsert
 
 export const playerStats = sqliteTable(
   'player_stats',
@@ -101,10 +100,9 @@ export const playerStats = sqliteTable(
   ]
 )
 
-export type PlayerStats = typeof playerStats.$inferSelect
 export type PlayerStatsInsert = typeof playerStats.$inferInsert
 
-export const gamesRelations = relations(games, ({ one }) => ({
+export const gamesRelations = relations(games, ({ one, many }) => ({
   homeTeam: one(teams, {
     fields: [games.homeTeamId],
     references: [teams.teamId],
@@ -113,6 +111,7 @@ export const gamesRelations = relations(games, ({ one }) => ({
     fields: [games.awayTeamId],
     references: [teams.teamId],
   }),
+  stats: many(playerStats),
 }))
 
 export const playerStatsRelations = relations(playerStats, ({ one }) => ({

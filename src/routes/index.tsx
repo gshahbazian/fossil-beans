@@ -2,8 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import GamesPage from '@/components/games-page'
 import {
-  getAllGamesOnPSTDate,
-  getGamePlayerStats,
+  getHomeGamesOnPSTDate,
   getPSTDateOfLatestGame,
 } from '@/server/db/queries'
 import { PRODUCTION_CACHE_HEADERS } from '@/lib/cache-control'
@@ -14,19 +13,11 @@ const loadHomeData = createServerFn().handler(async () => {
     return { pstDate: undefined, games: [] }
   }
 
-  const games = await getAllGamesOnPSTDate(pstDate)
-  const gamesWithStats = await Promise.all(
-    games.map(async (game) => ({
-      ...game,
-      stats: await getGamePlayerStats(game.gameId),
-    }))
-  )
+  const games = await getHomeGamesOnPSTDate(pstDate)
 
-  // Only surface games that actually have player stats; drop empty ones here so
-  // they are never serialized to the client.
   return {
     pstDate,
-    games: gamesWithStats.filter((game) => game.stats.length > 0),
+    games: games.filter((game) => game.stats.length > 0),
   }
 })
 

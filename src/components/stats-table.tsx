@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { type GamePlayerStat } from '@/server/db/queries'
+import { type HomePlayerStat } from '@/lib/home-data'
 import {
   Tooltip,
   TooltipContent,
@@ -21,8 +21,8 @@ export default function StatsTable({
   stats,
   onPlayerClicked,
 }: {
-  stats: GamePlayerStat[]
-  onPlayerClicked: (stat: GamePlayerStat) => void
+  stats: HomePlayerStat[]
+  onPlayerClicked: (stat: HomePlayerStat) => void
 }) {
   return (
     <Table>
@@ -110,8 +110,8 @@ function StatRow({
   stat,
   onPlayerClicked,
 }: {
-  stat: GamePlayerStat
-  onPlayerClicked: (stat: GamePlayerStat) => void
+  stat: HomePlayerStat
+  onPlayerClicked: (stat: HomePlayerStat) => void
 }) {
   return (
     <TableRow

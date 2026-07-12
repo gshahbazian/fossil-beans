@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers'
 import * as schema from './schema'
 
 export function getDb() {
-  return drizzle((env as { DB: D1Database }).DB, {
+  return drizzle(env.DB, {
     schema,
     casing: 'snake_case',
   })

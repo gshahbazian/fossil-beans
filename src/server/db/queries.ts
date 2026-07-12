@@ -1,6 +1,7 @@
 import { getDb } from '@/server/db/index'
 import { games, playerStats } from '@/server/db/schema'
-import { eq, desc, asc, sql } from 'drizzle-orm'
+import { type HomeGame } from '@/lib/home-data'
+import { eq, desc, asc, gt } from 'drizzle-orm'
 
 export async function getPSTDateOfLatestGame() {
   const db = getDb()
@@ -12,37 +13,68 @@ export async function getPSTDateOfLatestGame() {
   return latestGame?.pstDate
 }
 
-export type GameWithTeams = Awaited<
-  ReturnType<typeof getAllGamesOnPSTDate>
->[number]
-
-export async function getAllGamesOnPSTDate(date: string) {
+export async function getHomeGamesOnPSTDate(date: string): Promise<HomeGame[]> {
   const db = getDb()
   return await db.query.games.findMany({
     where: eq(games.pstDate, date),
+    columns: {
+      gameId: true,
+      gameTime: true,
+      homeScore: true,
+      awayScore: true,
+      gameStatus: true,
+    },
     with: {
-      homeTeam: true,
-      awayTeam: true,
+      homeTeam: {
+        columns: {
+          teamId: true,
+          teamName: true,
+          abbreviation: true,
+        },
+      },
+      awayTeam: {
+        columns: {
+          teamId: true,
+          teamName: true,
+          abbreviation: true,
+        },
+      },
+      stats: {
+        where: gt(playerStats.minutesSeconds, 0),
+        columns: {
+          gameId: true,
+          playerId: true,
+          teamId: true,
+          minutesSeconds: true,
+          points: true,
+          rebounds: true,
+          assists: true,
+          steals: true,
+          blocks: true,
+          fieldGoalsMade: true,
+          fieldGoalsAttempted: true,
+          threePointersMade: true,
+          threePointersAttempted: true,
+          freeThrowsMade: true,
+          freeThrowsAttempted: true,
+          turnovers: true,
+        },
+        with: {
+          player: {
+            columns: {
+              playerId: true,
+              playerName: true,
+              jerseyNum: true,
+            },
+          },
+        },
+        orderBy: [
+          desc(playerStats.espnPoints),
+          desc(playerStats.minutesSeconds),
+          playerStats.playerId,
+        ],
+      },
     },
     orderBy: asc(games.gameTime),
-  })
-}
-
-export type GamePlayerStat = Awaited<
-  ReturnType<typeof getGamePlayerStats>
->[number]
-
-export async function getGamePlayerStats(gameId: string) {
-  const db = getDb()
-  return await db.query.playerStats.findMany({
-    where: sql`${playerStats.gameId} = ${gameId} AND ${playerStats.minutesSeconds} > 0`,
-    with: {
-      player: true,
-    },
-    orderBy: [
-      desc(playerStats.espnPoints),
-      desc(playerStats.minutesSeconds),
-      playerStats.playerId,
-    ],
   })
 }

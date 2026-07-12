@@ -4,14 +4,17 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { type GameWithTeams, type GamePlayerStat } from '@/server/db/queries'
-import { VisuallyHidden } from 'radix-ui'
+import {
+  type HomeGame,
+  type HomePlayer,
+  type HomePlayerStat,
+  type HomeTeam,
+} from '@/lib/home-data'
 import { trimIntervalToMinsSecs } from '@/lib/trim-interval'
 import { formatShootingPercentage } from '@/lib/format-percentage'
 import { formatPstShortDate } from '@/lib/format-date'
 import { getTeamColors } from '@/lib/team-colors'
 import { cn } from '@/lib/utils'
-import { type Player, type Team } from '@/server/db/schema'
 
 declare module 'react' {
   interface CSSProperties {
@@ -20,33 +23,31 @@ declare module 'react' {
 }
 
 export default function PlayerDialog({
-  isOpen,
   onClose,
   playerStat,
-  gameWithTeams,
+  game,
 }: {
-  isOpen: boolean
   onClose: () => void
-  playerStat: GamePlayerStat
-  gameWithTeams: GameWithTeams
+  playerStat: HomePlayerStat
+  game: HomeGame
 }) {
   const onOpenChange = (open: boolean) => {
     if (open) return
     onClose()
   }
 
-  const playerTeam = getPlayerTeam(gameWithTeams, playerStat.teamId)
+  const playerTeam = getPlayerTeam(game, playerStat.teamId)
   const teamColors = getTeamColors(playerTeam.abbreviation)
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="w-[min(28rem,100%-1rem)] rounded-2xl p-0 shadow-lg [clip-path:inset(0_round_1rem)] dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10">
-        <VisuallyHidden.Root>
+        <div className="sr-only">
           <DialogTitle>{playerStat.player.playerName}</DialogTitle>
           <DialogDescription>
             Stats for {playerStat.player.playerName}
           </DialogDescription>
-        </VisuallyHidden.Root>
+        </div>
 
         <div
           className="flex flex-col"
@@ -58,7 +59,7 @@ export default function PlayerDialog({
           }}
         >
           <PlayerHeader player={playerStat.player} team={playerTeam} />
-          <GameBar gameWithTeams={gameWithTeams} />
+          <GameBar game={game} />
 
           <div className="flex flex-col gap-2 bg-neutral-50 p-2 sm:gap-3 sm:p-5 dark:bg-neutral-900">
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -119,7 +120,13 @@ export default function PlayerDialog({
   )
 }
 
-function PlayerHeader({ player, team }: { player: Player; team: Team }) {
+function PlayerHeader({
+  player,
+  team,
+}: {
+  player: HomePlayer
+  team: HomeTeam
+}) {
   return (
     <div className="team-splash relative h-48 sm:h-56">
       <div className="pointer-events-none absolute inset-0 grid place-content-center overflow-hidden opacity-10">
@@ -149,11 +156,7 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
           {player.playerName}
         </h2>
 
-        <div className="text-sm font-medium opacity-80">
-          {team.teamName}
-          {/* GABE: we'll add pos/height later */}
-          {/* {player.position || 'Position N/A'} • {player.height || 'Height N/A'} */}
-        </div>
+        <div className="text-sm font-medium opacity-80">{team.teamName}</div>
       </div>
 
       <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
@@ -161,24 +164,24 @@ function PlayerHeader({ player, team }: { player: Player; team: Team }) {
   )
 }
 
-function GameBar({ gameWithTeams }: { gameWithTeams: GameWithTeams }) {
-  const gameDate = formatPstShortDate(gameWithTeams.gameTime)
+function GameBar({ game }: { game: HomeGame }) {
+  const gameDate = formatPstShortDate(game.gameTime)
 
   return (
     <div className="flex items-center justify-between bg-black px-2 py-3 text-white sm:px-5">
       <div className="flex items-center gap-1 sm:gap-3">
-        <TeamPill team={gameWithTeams.awayTeam} logoPosition="left" />
+        <TeamPill team={game.awayTeam} logoPosition="left" />
         <span className="font-mono text-sm font-bold">
-          {gameWithTeams.awayScore}-{gameWithTeams.homeScore}
+          {game.awayScore}-{game.homeScore}
         </span>
-        <TeamPill team={gameWithTeams.homeTeam} logoPosition="right" />
+        <TeamPill team={game.homeTeam} logoPosition="right" />
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
         <span className="text-xs text-neutral-400">{gameDate}</span>
-        {gameWithTeams.gameStatus && (
+        {game.gameStatus && (
           <span className="rounded-full bg-neutral-800 px-3 py-1 text-[0.625rem] font-bold tracking-wider text-neutral-300 uppercase">
-            {gameWithTeams.gameStatus}
+            {game.gameStatus}
           </span>
         )}
       </div>
@@ -266,7 +269,7 @@ function TeamPill({
   team,
   logoPosition,
 }: {
-  team: Team
+  team: HomeTeam
   logoPosition: 'left' | 'right'
 }) {
   const logoCircle = (
@@ -293,7 +296,7 @@ function TeamPill({
   )
 }
 
-function getPlayerTeam(game: GameWithTeams, playerTeamId: number): Team {
+function getPlayerTeam(game: HomeGame, playerTeamId: number): HomeTeam {
   if (game.homeTeam.teamId === playerTeamId) return game.homeTeam
 
   return game.awayTeam

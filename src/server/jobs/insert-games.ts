@@ -1,13 +1,16 @@
 import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '@/server/db/schema'
-import { games, playerStats, players } from '@/server/db/schema'
+import {
+  games,
+  playerStats,
+  players,
+  type GameInsert,
+  type PlayerInsert,
+  type PlayerStatsInsert,
+} from '@/server/db/schema'
 import { fetchGameIdsForDate } from '@/server/nba/game-log'
 
-const NBA_LIVE_DATA_URL =
-  'https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData'
-const NBA_BOX_SCORE_URL = `${NBA_LIVE_DATA_URL}/boxscore`
-const NBA_SCOREBOARD_URL = `${NBA_LIVE_DATA_URL}/scoreboard/todaysScoreboard_00.json`
 const NBA_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.nba.com',
@@ -20,12 +23,10 @@ const NBA_FETCH_TIMEOUT_MS = 15_000
 const PLAYER_INSERT_CHUNK_SIZE = 20
 const PLAYER_STATS_INSERT_CHUNK_SIZE = 4
 
-type InsertGamesEnv = {
-  DB: D1Database
-  NBA_BOX_SCORE_URL?: string
-  NBA_GAME_LOG_URL?: string
-  NBA_SCOREBOARD_URL?: string
-}
+type InsertGamesEnv = Pick<
+  Cloudflare.Env,
+  'DB' | 'NBA_BOX_SCORE_URL' | 'NBA_GAME_LOG_URL' | 'NBA_SCOREBOARD_URL'
+>
 
 type InsertGamesOptions = {
   date?: string
@@ -83,10 +84,6 @@ type BoxScore = {
     awayTeam: Team
   }
 }
-
-type GameInsert = typeof games.$inferInsert
-type PlayerInsert = typeof players.$inferInsert
-type PlayerStatsInsert = typeof playerStats.$inferInsert
 
 export type InsertGamesResult = {
   date?: string
@@ -149,12 +146,9 @@ async function getGameIds(env: InsertGamesEnv, options: InsertGamesOptions) {
 }
 
 async function fetchTodayGameIds(env: InsertGamesEnv) {
-  const response = await fetchNba(
-    env.NBA_SCOREBOARD_URL ?? NBA_SCOREBOARD_URL,
-    {
-      headers: NBA_HEADERS,
-    }
-  )
+  const response = await fetchNba(env.NBA_SCOREBOARD_URL, {
+    headers: NBA_HEADERS,
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to fetch NBA scoreboard: ${response.status}`)
@@ -193,10 +187,12 @@ async function fetchBoxScores(env: InsertGamesEnv, gameIds: string[]) {
 }
 
 async function fetchBoxScore(env: InsertGamesEnv, gameId: string) {
-  const baseUrl = env.NBA_BOX_SCORE_URL ?? NBA_BOX_SCORE_URL
-  const response = await fetchNba(`${baseUrl}/boxscore_${gameId}.json`, {
-    headers: NBA_HEADERS,
-  })
+  const response = await fetchNba(
+    `${env.NBA_BOX_SCORE_URL}/boxscore_${gameId}.json`,
+    {
+      headers: NBA_HEADERS,
+    }
+  )
 
   if (response.status === 403) {
     throw new ForbiddenError(gameId)

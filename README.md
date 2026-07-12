@@ -56,35 +56,67 @@ Sharable NBA box scores.
 
 ## Deploying to Cloudflare
 
-1. Create the remote D1 database (one time):
+This app deploys as a Cloudflare Worker with static assets and a D1 database.
+Wrangler creates the Worker on the first deployment.
+
+### One-time setup
+
+1. Authenticate Wrangler and create the production database:
 
    ```sh
+   pnpm exec wrangler login
    pnpm exec wrangler d1 create fossil-beans
    ```
 
-   Copy the returned `database_id` into `wrangler.jsonc`
-   (`d1_databases[0].database_id`).
+   Copy the returned `database_id` into `d1_databases[0].database_id` in
+   `wrangler.jsonc`.
 
-2. Apply migrations and seed teams:
+2. Set a random secret for the game-insert and cache-purge endpoints:
+
+   ```sh
+   pnpm exec wrangler secret put PURGE_SECRET
+   ```
+
+   Keep this value available for remote seed commands. It intentionally does
+   not live in `wrangler.jsonc`.
+
+3. Initialize the production database:
 
    ```sh
    pnpm db:migrate:remote
    pnpm seed:teams:remote
    ```
 
-3. Build and deploy:
+### Deploy a release
 
-   ```sh
-   pnpm deploy
-   ```
+Run checks, apply pending migrations, then deploy:
 
-4. Seed games through the deployed Worker:
+```sh
+pnpm check
+pnpm db:migrate:remote
+pnpm deploy
+```
 
-   ```sh
-   PURGE_URL=https://your-host \
-   PURGE_SECRET=<same-secret-you-put-in-cloudflare> \
-   pnpm seed:games:remote
-   ```
+`pnpm deploy` builds the Worker and client assets, then uploads both with
+Wrangler. If PostHog is enabled, provide `VITE_POSTHOG_KEY` in `.env` during the
+build; Vite embeds it in the client bundle.
+
+Wrangler prints the deployed Worker URL. Seed games through that Worker so the
+home-page cache is purged after the database update:
+
+```sh
+PURGE_URL=https://fossil-beans.<your-subdomain>.workers.dev \
+PURGE_SECRET=<same-secret-you-put-in-cloudflare> \
+pnpm seed:games:remote
+```
+
+To seed a specific date:
+
+```sh
+PURGE_URL=https://fossil-beans.<your-subdomain>.workers.dev \
+PURGE_SECRET=<same-secret-you-put-in-cloudflare> \
+./scripts/insert-games.sh --remote 2026-04-12
+```
 
 ## Scripts
 

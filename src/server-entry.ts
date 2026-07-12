@@ -11,21 +11,12 @@ const INSERT_GAMES_PATH = '/api/insert-games'
 const POSTHOG_INGEST_PATH = '/ingest'
 const POSTHOG_INGEST_ORIGIN = 'https://us.i.posthog.com'
 
-type WorkerEnv = {
-  DB: D1Database
-  ASSETS: Fetcher
-  NBA_BOX_SCORE_URL?: string
-  NBA_GAME_LOG_URL?: string
-  NBA_SCOREBOARD_URL?: string
-  PURGE_SECRET?: string
-}
-
 // Edge caching is handled by Cloudflare's native Workers Cache (enabled via
 // `cache` in wrangler.jsonc). It sits in front of this Worker and serves cached
 // responses without running the Worker. Every response must therefore either
 // provide an intentional cache policy or explicitly opt out of caching.
 export default {
-  async fetch(request: Request, workerEnv: WorkerEnv): Promise<Response> {
+  async fetch(request: Request, workerEnv: Cloudflare.Env): Promise<Response> {
     const url = new URL(request.url)
 
     if (isPostHogIngestPath(url.pathname)) {
@@ -47,10 +38,10 @@ export default {
     return applyFrameworkCachePolicy(response)
   },
 
-  async scheduled(controller: ScheduledController, workerEnv: WorkerEnv) {
+  async scheduled(controller: ScheduledController, workerEnv: Cloudflare.Env) {
     await handleScheduled(controller, workerEnv)
   },
-} satisfies ExportedHandler<WorkerEnv>
+} satisfies ExportedHandler<Cloudflare.Env>
 
 function handlePostHogIngest(request: Request, requestUrl: URL) {
   const path = requestUrl.pathname.slice(POSTHOG_INGEST_PATH.length) || '/'
@@ -95,7 +86,7 @@ function preventCaching(response: Response) {
 
 async function handlePurge(
   request: Request,
-  workerEnv: WorkerEnv
+  workerEnv: Cloudflare.Env
 ): Promise<Response> {
   const unauthorized = getUnauthorizedResponse(request, workerEnv)
   if (unauthorized) {
@@ -110,7 +101,7 @@ async function handlePurge(
 async function handleInsertGames(
   request: Request,
   requestUrl: URL,
-  workerEnv: WorkerEnv
+  workerEnv: Cloudflare.Env
 ) {
   const unauthorized = getUnauthorizedResponse(request, workerEnv)
   if (unauthorized) {
@@ -139,7 +130,7 @@ function getGameIds(requestUrl: URL) {
   return value.split(',').filter(Boolean)
 }
 
-function getUnauthorizedResponse(request: Request, workerEnv: WorkerEnv) {
+function getUnauthorizedResponse(request: Request, workerEnv: Cloudflare.Env) {
   if (!workerEnv.PURGE_SECRET) {
     return Response.json(
       { error: 'Authenticated endpoint not configured' },
@@ -155,7 +146,7 @@ function getUnauthorizedResponse(request: Request, workerEnv: WorkerEnv) {
 
 async function handleScheduled(
   controller: ScheduledController,
-  workerEnv: WorkerEnv
+  workerEnv: Cloudflare.Env
 ) {
   try {
     console.log('Scheduled NBA game insert started', {
