@@ -1,7 +1,10 @@
 /**
- * Cache-Control for cacheable, server-rendered routes. The browser honors
- * `max-age`; Cloudflare's native Workers Cache (enabled in wrangler.jsonc) sits
- * in front of the Worker and honors `s-maxage` + `stale-while-revalidate`.
+ * Cache cacheable, server-rendered routes for five minutes in browsers and one
+ * day at Cloudflare's edge. Cloudflare may serve stale responses for one week
+ * while it revalidates them in the background.
  */
-export const PRODUCTION_CACHE_CONTROL =
-  'public, max-age=300, s-maxage=86400, stale-while-revalidate=604800'
+export const PRODUCTION_CACHE_HEADERS = {
+  'Cache-Control': 'public, max-age=300',
+  'Cloudflare-CDN-Cache-Control':
+    'public, max-age=86400, stale-while-revalidate=604800',
+}

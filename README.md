@@ -112,13 +112,19 @@ native [Workers Cache](https://blog.cloudflare.com/workers-cache/), enabled with
 2. On a hit, Cloudflare returns the cached HTML **without running the worker**
    (no D1 query, no render).
 3. On a miss, the worker runs the TanStack Start handler, which returns the HTML
-   with the route's `Cache-Control` header
-   (`public, max-age=300, s-maxage=86400, stale-while-revalidate=604800`).
-   Cloudflare caches it per `s-maxage` and serves stale-while-revalidate on
-   subsequent misses.
+   with separate browser and edge policies:
+   - `Cache-Control: public, max-age=300` caches in the browser for five minutes.
+   - `Cloudflare-CDN-Cache-Control: public, max-age=86400, stale-while-revalidate=604800`
+     caches at Cloudflare's edge for one day and permits stale responses for one
+     week while revalidation happens in the background.
 
 This is the equivalent of the old Next.js `cacheLife('days')` setup, minus the
 hand-rolled `caches.default` logic we used before.
+
+The PostHog proxy, operational API responses, framework errors, and framework
+responses without an intentional cache policy send `no-store` policies for both
+browsers and Cloudflare. This prevents Workers Cache from assigning heuristic
+TTLs to them.
 
 ### Invalidation
 

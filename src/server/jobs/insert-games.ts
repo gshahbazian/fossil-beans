@@ -4,9 +4,10 @@ import * as schema from '@/server/db/schema'
 import { games, playerStats, players } from '@/server/db/schema'
 import { fetchGameIdsForDate } from '@/server/nba/game-log'
 
-const NBA_BOX_SCORE_URL = 'https://cdn.nba.com/static/json/liveData/boxscore'
-const NBA_SCOREBOARD_URL =
-  'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json'
+const NBA_LIVE_DATA_URL =
+  'https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData'
+const NBA_BOX_SCORE_URL = `${NBA_LIVE_DATA_URL}/boxscore`
+const NBA_SCOREBOARD_URL = `${NBA_LIVE_DATA_URL}/scoreboard/todaysScoreboard_00.json`
 const NBA_HEADERS = {
   accept: 'application/json, text/plain, */*',
   origin: 'https://www.nba.com',

@@ -1,13 +1,13 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fossil-beans",
-  "compatibility_date": "2026-06-01",
+  "compatibility_date": "2026-07-08",
   "compatibility_flags": ["nodejs_compat"],
   "main": "./src/server-entry.ts",
   "observability": { "enabled": true },
   // Native Workers Cache: sits in front of this Worker and caches responses per
-  // their `Cache-Control` header (the home route sets s-maxage), serving hits
-  // without running the Worker. Invalidated via `cache.purge()` after inserts.
+  // their `Cloudflare-CDN-Cache-Control` header, serving hits without running
+  // the Worker. Invalidated via `cache.purge()` after inserts.
   "cache": { "enabled": true },
   "triggers": {
     // Disabled. To enable, move the schedule from the comment into the array.
@@ -23,14 +23,14 @@
     {
       "binding": "DB",
       "database_name": "fossil-beans",
-      "database_id": "REPLACE_WITH_REMOTE_DB_ID",
+      "database_id": "469df9d3-ce24-4e94-858c-7458fbdd82f5",
       "migrations_dir": "./drizzle",
     },
   ],
   "vars": {
     "NBA_GAME_LOG_URL": "https://stats.nba.com/stats/leaguegamelog",
-    "NBA_BOX_SCORE_URL": "https://cdn.nba.com/static/json/liveData/boxscore",
-    "NBA_SCOREBOARD_URL": "https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json",
+    "NBA_BOX_SCORE_URL": "https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData/boxscore",
+    "NBA_SCOREBOARD_URL": "https://nba-prod-us-east-1-mediaops-stats.s3.amazonaws.com/NBA/liveData/scoreboard/todaysScoreboard_00.json",
   },
   // PURGE_SECRET is intentionally NOT declared here. A plaintext `vars` entry
   // overrides a `wrangler secret put` value on deploy, which would reset the

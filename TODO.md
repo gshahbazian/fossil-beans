@@ -1,35 +1,37 @@
 # TODO
 
-The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complete. The remaining work is deployment setup, validation, and production hardening.
+The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complete. The remaining work is production validation, hardening, and the `fossil-beans.com` cutover.
 
-## Required before production deployment
+The production Worker is live at <https://fossil-beans.gabeshahbazian.workers.dev>. Its remote D1 database contains all 30 teams plus 15 games and 535 player-stat lines from April 12, 2026. The custom domain still points to Vercel.
 
-- [ ] Create the remote D1 database:
+## Completed for initial production deployment
+
+- [x] Create the remote D1 database:
   ```bash
   pnpm exec wrangler d1 create fossil-beans
   ```
-- [ ] Replace `REPLACE_WITH_REMOTE_DB_ID` in `wrangler.jsonc` with the returned D1 database ID.
-- [ ] Configure the production cache-purge secret:
+- [x] Replace `REPLACE_WITH_REMOTE_DB_ID` in `wrangler.jsonc` with the returned D1 database ID.
+- [x] Configure the production cache-purge secret:
   ```bash
   pnpm exec wrangler secret put PURGE_SECRET
   ```
-- [ ] Decide whether PostHog should be enabled and, if so, provide `VITE_POSTHOG_KEY` at build time.
-- [ ] Regenerate Cloudflare binding types and run the project checks:
+- [x] Decide whether PostHog should be enabled and, if so, provide `VITE_POSTHOG_KEY` at build time.
+- [x] Regenerate Cloudflare binding types and run the project checks:
   ```bash
   pnpm check
   ```
-- [ ] Apply the D1 migrations remotely:
+- [x] Apply the D1 migrations remotely:
   ```bash
   pnpm db:migrate:remote
   ```
-- [ ] Seed teams before inserting games because game records reference teams:
+- [x] Seed teams before inserting games because game records reference teams:
   ```bash
   pnpm seed:teams:remote
   ```
-- [ ] Update `compatibility_date` in `wrangler.jsonc` to a current date and review the compatibility changes that become enabled.
-- [ ] Fix the production cache headers before relying on stale-while-revalidate. Cloudflare Workers Cache treats `s-maxage` as disabling stale-while-revalidate, so use the appropriate browser and Cloudflare CDN cache headers to express the intended browser TTL, edge TTL, and revalidation behavior.
-- [ ] Explicitly mark non-cacheable Worker responses such as `/ingest`, operational API responses, authentication failures, and framework error responses with an appropriate cache policy. With Workers Cache enabled, eligible responses without a `Cache-Control` header may receive heuristic TTLs.
-- [ ] Build and deploy the production Worker:
+- [x] Update `compatibility_date` in `wrangler.jsonc` to a current date and review the compatibility changes that become enabled.
+- [x] Fix the production cache headers before relying on stale-while-revalidate. Cloudflare Workers Cache treats `s-maxage` as disabling stale-while-revalidate, so use the appropriate browser and Cloudflare CDN cache headers to express the intended browser TTL, edge TTL, and revalidation behavior.
+- [x] Explicitly mark non-cacheable Worker responses such as `/ingest`, operational API responses, authentication failures, and framework error responses with an appropriate cache policy. With Workers Cache enabled, eligible responses without a `Cache-Control` header may receive heuristic TTLs.
+- [x] Build and deploy the production Worker:
   ```bash
   pnpm deploy
   ```
@@ -41,12 +43,12 @@ The Next.js/Vercel to TanStack Start/Cloudflare rewrite is substantially complet
 - [ ] Test player dialogs, tables, tooltips, sticky game headers, and player-click analytics.
 - [ ] Test with PostHog both enabled and disabled.
 - [ ] Verify static assets, NBA images, and Google Fonts load correctly.
-- [ ] Verify D1 reads, writes, migrations, and team foreign-key behavior.
-- [ ] Verify authenticated game insertion and cache-purge endpoints reject missing or invalid bearer secrets.
-- [ ] Verify the Worker can reach the NBA endpoints without persistent 403 or timeout failures.
+- [x] Verify D1 reads, writes, migrations, and team foreign-key behavior.
+- [x] Verify authenticated game insertion and cache-purge endpoints reject missing or invalid bearer secrets.
+- [x] Verify the Worker can reach the NBA endpoints without persistent 403 or timeout failures.
 - [ ] Verify the `/ingest` PostHog proxy works and strips cookies as intended.
 - [ ] Verify the browser and Cloudflare-specific cache headers, stale-while-revalidate behavior, `Cf-Cache-Status`, and global cache-purge behavior on Cloudflare.
-- [ ] Verify that `/ingest`, operational API responses, authentication failures, and framework error responses are not cached.
+- [x] Verify that `/ingest`, operational API responses, authentication failures, and framework error responses are not cached.
 - [ ] Confirm whether `nodejs_compat` is required by the production bundle before considering its removal.
 
 ## Application decisions

@@ -6,7 +6,7 @@ import {
   getGamePlayerStats,
   getPSTDateOfLatestGame,
 } from '@/server/db/queries'
-import { PRODUCTION_CACHE_CONTROL } from '@/lib/cache-control'
+import { PRODUCTION_CACHE_HEADERS } from '@/lib/cache-control'
 
 const loadHomeData = createServerFn().handler(async () => {
   const pstDate = await getPSTDateOfLatestGame()
@@ -33,9 +33,7 @@ const loadHomeData = createServerFn().handler(async () => {
 export const Route = createFileRoute('/')({
   loader: () => loadHomeData(),
   component: HomePage,
-  headers: () => ({
-    'Cache-Control': getCacheControlHeader(),
-  }),
+  headers: () => getCacheHeaders(),
 })
 
 function HomePage() {
@@ -43,8 +41,10 @@ function HomePage() {
   return <GamesPage pstDate={pstDate} games={games} />
 }
 
-function getCacheControlHeader() {
-  if (!import.meta.env.PROD) return 'no-store'
+function getCacheHeaders() {
+  if (!import.meta.env.PROD) {
+    return { 'Cache-Control': 'no-store' }
+  }
 
-  return PRODUCTION_CACHE_CONTROL
+  return PRODUCTION_CACHE_HEADERS
 }

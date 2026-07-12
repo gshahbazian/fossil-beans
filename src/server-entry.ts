@@ -21,26 +21,30 @@ type WorkerEnv = {
 }
 
 // Edge caching is handled by Cloudflare's native Workers Cache (enabled via
-// `cache` in wrangler.jsonc). It sits in front of this Worker and caches
-// responses per their `Cache-Control` header without running the Worker on a
-// hit — so the fetch handler only routes; it does not manage the cache.
+// `cache` in wrangler.jsonc). It sits in front of this Worker and serves cached
+// responses without running the Worker. Every response must therefore either
+// provide an intentional cache policy or explicitly opt out of caching.
 export default {
   async fetch(request: Request, workerEnv: WorkerEnv): Promise<Response> {
     const url = new URL(request.url)
 
     if (isPostHogIngestPath(url.pathname)) {
-      return handlePostHogIngest(request, url)
+      const response = await handlePostHogIngest(request, url)
+      return preventCaching(response)
     }
 
     if (url.pathname === '/api/purge-cache' && request.method === 'POST') {
-      return handlePurge(request, workerEnv)
+      const response = await handlePurge(request, workerEnv)
+      return preventCaching(response)
     }
 
     if (url.pathname === INSERT_GAMES_PATH && request.method === 'POST') {
-      return handleInsertGames(request, url, workerEnv)
+      const response = await handleInsertGames(request, url, workerEnv)
+      return preventCaching(response)
     }
 
-    return startHandler(request)
+    const response = await startHandler(request)
+    return applyFrameworkCachePolicy(response)
   },
 
   async scheduled(controller: ScheduledController, workerEnv: WorkerEnv) {
@@ -69,6 +73,24 @@ function isPostHogIngestPath(pathname: string) {
   if (pathname === POSTHOG_INGEST_PATH) return true
 
   return pathname.startsWith(`${POSTHOG_INGEST_PATH}/`)
+}
+
+function applyFrameworkCachePolicy(response: Response) {
+  if (response.status >= 400) return preventCaching(response)
+
+  const hasCachePolicy =
+    response.headers.has('cache-control') ||
+    response.headers.has('cloudflare-cdn-cache-control')
+  if (hasCachePolicy) return response
+
+  return preventCaching(response)
+}
+
+function preventCaching(response: Response) {
+  const noStoreResponse = new Response(response.body, response)
+  noStoreResponse.headers.set('Cache-Control', 'no-store')
+  noStoreResponse.headers.set('Cloudflare-CDN-Cache-Control', 'no-store')
+  return noStoreResponse
 }
 
 async function handlePurge(
