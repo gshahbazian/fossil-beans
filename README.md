@@ -123,7 +123,7 @@ PURGE_SECRET=<same-secret-you-put-in-cloudflare> \
 | Script                   | What it does                                         |
 | ------------------------ | ---------------------------------------------------- |
 | `pnpm dev`               | Run Vite dev server with Cloudflare bindings         |
-| `pnpm build`             | Build the worker + prerender static pages            |
+| `pnpm build`             | Build the Worker and client bundle                   |
 | `pnpm deploy`            | Build and push to Cloudflare                         |
 | `pnpm db:migrate:local`  | Apply migrations to local D1                         |
 | `pnpm db:migrate:remote` | Apply migrations to remote D1                        |

@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/d1'
-import * as schema from '@/server/db/schema'
+import { getDbFrom } from '@/server/db/index'
 import {
   games,
   playerStats,
@@ -215,7 +214,7 @@ function fetchNba(input: RequestInfo | URL, init: RequestInit) {
 }
 
 async function upsertBoxScores(dbBinding: D1Database, boxScores: BoxScore[]) {
-  const db = drizzle(dbBinding, { schema, casing: 'snake_case' })
+  const db = getDbFrom(dbBinding)
   const now = new Date()
   const gameRows = boxScores.map((boxScore) => getGameRow(boxScore, now))
   const playerRows = getPlayerRows(boxScores)
