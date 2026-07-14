@@ -49,6 +49,14 @@ function handlePostHogIngest(request: Request, requestUrl: URL) {
   const headers = new Headers(request.headers)
   headers.delete('cookie')
 
+  // Forward the real client IP so PostHog derives geolocation from the visitor
+  // rather than from Cloudflare's egress address. Cloudflare sets
+  // `CF-Connecting-IP` on the inbound request; PostHog reads `X-Forwarded-For`.
+  const clientIp = request.headers.get('cf-connecting-ip')
+  if (clientIp) {
+    headers.set('x-forwarded-for', clientIp)
+  }
+
   return fetch(
     new Request(url, {
       body: request.body,
@@ -165,9 +173,9 @@ async function handleScheduled(
 
 /**
  * Invalidate this Worker's edge cache. The only response we mark cacheable is
- * the home page, so purging everything the Worker cached invalidates it. Unlike
- * the old `caches.default` approach this is global and needs no origin, so it
- * works identically from the request handlers and the cron.
+ * the home page, so purging everything the Worker cached invalidates it. The
+ * purge is global and needs no origin, so it works identically from the request
+ * handlers and the cron.
  */
 async function purgeSiteCache() {
   try {

@@ -150,9 +150,6 @@ native [Workers Cache](https://blog.cloudflare.com/workers-cache/), enabled with
      caches at Cloudflare's edge for one day and permits stale responses for one
      week while revalidation happens in the background.
 
-This is the equivalent of the old Next.js `cacheLife('days')` setup, minus the
-hand-rolled `caches.default` logic we used before.
-
 The PostHog proxy, operational API responses, framework errors, and framework
 responses without an intentional cache policy send `no-store` policies for both
 browsers and Cloudflare. This prevents Workers Cache from assigning heuristic
@@ -167,8 +164,8 @@ auth-gated by the `PURGE_SECRET` secret.
 
 Purging uses the Workers Cache API — `cache.purge({ purgeEverything: true })`
 via `cloudflare:workers`. Because the home page is the only cacheable response,
-this invalidates it. Unlike the old approach it is global and needs no origin,
-so the cron, the manual endpoint, and local dev all purge the same way.
+this invalidates it. The purge is global and needs no origin, so the cron, the
+manual endpoint, and local dev all purge the same way.
 
 - Local dev: `PURGE_URL` and `PURGE_SECRET` default to
   `http://localhost:3000` and `local-dev-purge-secret` (the value in
