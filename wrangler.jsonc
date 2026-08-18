@@ -1,8 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fossil-beans",
-  "compatibility_date": "2026-07-08",
-  "compatibility_flags": ["nodejs_compat"],
+  // From 2026-08-04 on, `nodejs_compat` and `nodejs_compat_v2` are enabled by
+  // the compatibility date itself, so no `compatibility_flags` entry is needed.
+  "compatibility_date": "2026-08-04",
   "main": "./src/server-entry.ts",
   "observability": { "enabled": true },
   // Native Workers Cache: sits in front of this Worker and caches responses per

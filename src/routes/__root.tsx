@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 import appCss from '@/styles/globals.css?url'
 import { PostHogProvider } from '@/components/posthog-provider'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -47,7 +48,9 @@ function RootComponent() {
       </head>
       <body className="overflow-x-hidden">
         <PostHogProvider>
-          <Outlet />
+          <TooltipProvider>
+            <Outlet />
+          </TooltipProvider>
         </PostHogProvider>
         <Scripts />
       </body>

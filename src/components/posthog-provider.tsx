@@ -1,7 +1,6 @@
 import posthog from 'posthog-js'
-import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react'
+import { PostHogProvider as PHProvider } from 'posthog-js/react'
 import { useEffect } from 'react'
-import { useRouterState } from '@tanstack/react-router'
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined
@@ -13,39 +12,15 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
-      capture_pageview: false,
-      capture_pageleave: true,
+      // Opt into PostHog's current default behaviour. Most relevant here:
+      // `capture_pageview` becomes 'history_change', so the SDK captures the
+      // initial pageview plus every History API navigation on its own, and
+      // `capture_pageleave` follows it. Also strips URL hashes from captured
+      // URLs and injects PostHog's external scripts into <head> so they do not
+      // disturb SSR hydration.
+      defaults: '2026-06-25',
     })
   }, [])
 
-  return (
-    <PHProvider client={posthog}>
-      <PostHogPageView />
-      {children}
-    </PHProvider>
-  )
-}
-
-function PostHogPageView() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const search = useRouterState({ select: (s) => s.location.searchStr })
-  const posthog = usePostHog()
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !posthog) return
-
-    posthog.capture('$pageview', {
-      $current_url: getPageViewUrl(pathname, search),
-    })
-  }, [pathname, search, posthog])
-
-  return null
-}
-
-function getPageViewUrl(pathname: string, search: string) {
-  const origin = window.location.origin
-  if (!search) return origin + pathname
-  if (search.startsWith('?')) return origin + pathname + search
-
-  return `${origin}${pathname}?${search}`
+  return <PHProvider client={posthog}>{children}</PHProvider>
 }
