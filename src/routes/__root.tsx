@@ -5,6 +5,8 @@ import {
   Scripts,
   createRootRoute,
 } from '@tanstack/react-router'
+import geistSansUrl from '@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url'
+import geistMonoUrl from '@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2?url'
 import appCss from '@/styles/globals.css?url'
 import { PostHogProvider } from '@/components/posthog-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -20,20 +22,24 @@ export const Route = createRootRoute({
       { rel: 'stylesheet', href: appCss },
       { rel: 'icon', href: '/icon.png' },
       {
+        rel: 'preload',
+        href: geistSansUrl,
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'preload',
+        href: geistMonoUrl,
+        as: 'font',
+        type: 'font/woff2',
+        crossOrigin: 'anonymous',
+      },
+      {
         rel: 'apple-touch-icon',
         sizes: '180x180',
         type: 'image/png',
         href: '/apple-touch-icon.png',
-      },
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      {
-        rel: 'preconnect',
-        href: 'https://fonts.gstatic.com',
-        crossOrigin: 'anonymous',
-      },
-      {
-        rel: 'stylesheet',
-        href: 'https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap',
       },
     ],
   }),
