@@ -1,13 +1,13 @@
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider } from 'posthog-js/react'
-import { useEffect } from 'react'
+import { useMountEffect } from '@/hooks/use-mount-effect'
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined
 const DEFAULT_POSTHOG_HOST = '/ingest'
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
+  useMountEffect(() => {
     if (!POSTHOG_KEY) return
 
     posthog.init(POSTHOG_KEY, {
@@ -20,7 +20,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // disturb SSR hydration.
       defaults: '2026-06-25',
     })
-  }, [])
+  })
 
   return <PHProvider client={posthog}>{children}</PHProvider>
 }

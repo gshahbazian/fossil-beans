@@ -8,5 +8,5 @@
   "printWidth": 80,
   "sortPackageJson": true,
   "sortTailwindcss": {},
-  "ignorePatterns": []
+  "ignorePatterns": [".agents/"]
 }

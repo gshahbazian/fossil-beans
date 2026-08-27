@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import PlayerDialog from '@/components/player-dialog'
 import { type HomeGame, type HomePlayerStat } from '@/lib/home-data'
+import { useMountEffect } from '@/hooks/use-mount-effect'
 import StatsTable from '@/components/stats-table'
 import { usePostHog } from 'posthog-js/react'
 
@@ -30,7 +31,7 @@ export default function GameStats({
     [posthog]
   )
 
-  useEffect(() => {
+  useMountEffect(() => {
     const header = headerRef.current
     if (!header) return
 
@@ -51,7 +52,7 @@ export default function GameStats({
     return () => {
       intersectionObserver.disconnect()
     }
-  }, [])
+  })
 
   return (
     <div className="relative col-span-full grid grid-cols-subgrid gap-y-8">
