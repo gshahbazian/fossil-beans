@@ -204,3 +204,16 @@
     );
   }
 }
+
+/* shadow.floriankiem.com `smooth-shadow-ring-lg` */
+.player-dialog {
+  --player-dialog-ring: rgb(255 255 255 / 18%);
+
+  box-shadow:
+    0 25px 50px color-mix(in srgb, black 5%, transparent),
+    0 12px 24px color-mix(in srgb, black 4%, transparent),
+    0 6px 12px color-mix(in srgb, black 3%, transparent),
+    0 3px 6px color-mix(in srgb, black 2%, transparent),
+    0 1.5px 3px color-mix(in srgb, black 2%, transparent),
+    0 0 0 1px var(--player-dialog-ring);
+}

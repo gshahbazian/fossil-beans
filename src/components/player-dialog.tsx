@@ -41,7 +41,13 @@ export default function PlayerDialog({
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(28rem,100%-1rem)] rounded-2xl p-0 shadow-lg [clip-path:inset(0_round_1rem)] dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10">
+      <DialogContent
+        className={cn(
+          'player-dialog w-[min(28rem,100%-1rem)] rounded-2xl bg-transparent p-0 ring-0',
+          '[:has(>&)_[data-slot=dialog-overlay]]:bg-black/70',
+          '**:data-[slot=dialog-close]:top-2 **:data-[slot=dialog-close]:right-2 **:data-[slot=dialog-close]:size-6 **:data-[slot=dialog-close]:rounded-md **:data-[slot=dialog-close]:bg-secondary **:data-[slot=dialog-close]:text-secondary-foreground **:data-[slot=dialog-close]:opacity-30 **:data-[slot=dialog-close]:hover:bg-secondary **:data-[slot=dialog-close]:hover:text-secondary-foreground **:data-[slot=dialog-close]:hover:opacity-60 [&_[data-slot=dialog-close]_svg]:size-3'
+        )}
+      >
         <div className="sr-only">
           <DialogTitle>{playerStat.player.playerName}</DialogTitle>
           <DialogDescription>
@@ -50,7 +56,7 @@ export default function PlayerDialog({
         </div>
 
         <div
-          className="flex flex-col"
+          className="flex flex-col overflow-hidden rounded-2xl [clip-path:inset(0_round_var(--radius-2xl))]"
           style={{
             '--team-primary': teamColors.primary,
             '--team-secondary': teamColors.secondary,
@@ -91,7 +97,7 @@ export default function PlayerDialog({
               />
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl bg-white p-3 shadow-sm sm:gap-3 sm:p-4 dark:bg-neutral-800 dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10">
+            <div className="flex flex-col gap-2 rounded-xl bg-white p-3 shadow-sm sm:gap-3 sm:p-4 dark:bg-neutral-800 dark:outline dark:-outline-offset-1 dark:outline-white/10">
               <span className="text-xs font-bold text-neutral-500 uppercase dark:text-neutral-400">
                 Shooting
               </span>
@@ -203,7 +209,7 @@ function StatCard({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-white dark:outline dark:outline-1 dark:-outline-offset-1 dark:outline-white/10',
+        'overflow-hidden rounded-xl bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-white dark:outline dark:-outline-offset-1 dark:outline-white/10',
         className
       )}
     >
