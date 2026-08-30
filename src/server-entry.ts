@@ -57,15 +57,15 @@ function handlePostHogIngest(request: Request, requestUrl: URL) {
     headers.set('x-forwarded-for', clientIp)
   }
 
-  return fetch(
-    new Request(url, {
-      body: request.body,
-      duplex: 'half',
-      headers,
-      method: request.method,
-      redirect: 'manual',
-    } as RequestInit & { duplex: 'half' })
-  )
+  const requestInit = {
+    body: request.body,
+    duplex: 'half',
+    headers,
+    method: request.method,
+    redirect: 'manual',
+  } satisfies RequestInit & { duplex: 'half' }
+
+  return fetch(new Request(url, requestInit))
 }
 
 function isPostHogIngestPath(pathname: string) {
@@ -198,8 +198,8 @@ function getScheduledTime(controller: ScheduledController) {
   return new Date(controller.scheduledTime).toISOString()
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) return error.message
+function getErrorMessage(cause: unknown) {
+  if (cause instanceof Error) return cause.message
 
   return 'Unknown error'
 }

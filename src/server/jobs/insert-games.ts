@@ -418,10 +418,20 @@ function formatPSTDate(date: Date) {
     month: '2-digit',
     day: '2-digit',
   }).formatToParts(date)
-  const year = parts.find((part) => part.type === 'year')!.value
-  const month = parts.find((part) => part.type === 'month')!.value
-  const day = parts.find((part) => part.type === 'day')!.value
+  const year = getDatePart(parts, 'year')
+  const month = getDatePart(parts, 'month')
+  const day = getDatePart(parts, 'day')
   return `${year}-${month}-${day}`
+}
+
+function getDatePart(
+  parts: Intl.DateTimeFormatPart[],
+  type: 'year' | 'month' | 'day'
+) {
+  const part = parts.find((part) => part.type === type)
+  if (!part) throw new Error(`Formatted date is missing its ${type}`)
+
+  return part.value
 }
 
 function chunkRows<T>(rows: T[], size: number) {
