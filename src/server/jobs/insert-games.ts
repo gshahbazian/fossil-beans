@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import { z } from 'zod'
 import { getDbFrom } from '@/server/db/index'
 import {
   games,
@@ -32,57 +33,60 @@ type InsertGamesOptions = {
   gameIds?: string[]
 }
 
-type ScoreboardGame = {
-  gameId: string
-}
+const todayScoreboardSchema = z.object({
+  scoreboard: z.object({
+    games: z.array(
+      z.object({
+        gameId: z.string(),
+      })
+    ),
+  }),
+})
 
-type TodayScoreboard = {
-  scoreboard: {
-    games: ScoreboardGame[]
-  }
-}
+const playerStatLineSchema = z.object({
+  assists: z.number(),
+  blocks: z.number(),
+  fieldGoalsAttempted: z.number(),
+  fieldGoalsMade: z.number(),
+  foulsPersonal: z.number(),
+  freeThrowsAttempted: z.number(),
+  freeThrowsMade: z.number(),
+  minutes: z.string().nullish(),
+  plusMinusPoints: z.number(),
+  points: z.number(),
+  reboundsTotal: z.number(),
+  steals: z.number(),
+  threePointersAttempted: z.number(),
+  threePointersMade: z.number(),
+  turnovers: z.number(),
+})
 
-type PlayerStatLine = {
-  assists: number
-  blocks: number
-  fieldGoalsAttempted: number
-  fieldGoalsMade: number
-  foulsPersonal: number
-  freeThrowsAttempted: number
-  freeThrowsMade: number
-  minutes: string
-  plusMinusPoints: number
-  points: number
-  reboundsTotal: number
-  steals: number
-  threePointersAttempted: number
-  threePointersMade: number
-  turnovers: number
-}
+const playerSchema = z.object({
+  personId: z.number(),
+  jerseyNum: z.string(),
+  statistics: playerStatLineSchema,
+  name: z.string(),
+})
 
-type Player = {
-  personId: number
-  jerseyNum: string
-  statistics: PlayerStatLine
-  name: string
-}
+const teamSchema = z.object({
+  teamId: z.number(),
+  score: z.number(),
+  players: z.array(playerSchema),
+})
 
-type Team = {
-  teamId: number
-  score: number
-  players: Player[]
-}
+const boxScoreSchema = z.object({
+  game: z.object({
+    gameId: z.string(),
+    gameTimeUTC: z.string(),
+    gameStatusText: z.string(),
+    period: z.number(),
+    homeTeam: teamSchema,
+    awayTeam: teamSchema,
+  }),
+})
 
-type BoxScore = {
-  game: {
-    gameId: string
-    gameTimeUTC: string
-    gameStatusText: string
-    period: number
-    homeTeam: Team
-    awayTeam: Team
-  }
-}
+type PlayerStatLine = z.infer<typeof playerStatLineSchema>
+type BoxScore = z.infer<typeof boxScoreSchema>
 
 export type InsertGamesResult = {
   date?: string
@@ -153,7 +157,7 @@ async function fetchTodayGameIds(env: InsertGamesEnv) {
     throw new Error(`Failed to fetch NBA scoreboard: ${response.status}`)
   }
 
-  const data = (await response.json()) as TodayScoreboard
+  const data = todayScoreboardSchema.parse(await response.json())
   return Array.from(new Set(data.scoreboard.games.map((game) => game.gameId)))
 }
 
@@ -203,7 +207,7 @@ async function fetchBoxScore(env: InsertGamesEnv, gameId: string) {
     )
   }
 
-  return (await response.json()) as BoxScore
+  return boxScoreSchema.parse(await response.json())
 }
 
 function fetchNba(input: RequestInfo | URL, init: RequestInit) {

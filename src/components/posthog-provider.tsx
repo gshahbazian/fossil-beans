@@ -1,17 +1,16 @@
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider } from 'posthog-js/react'
+import { env } from '@/lib/env'
 import { useMountEffect } from '@/hooks/use-mount-effect'
 
-const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
-const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST as string | undefined
 const DEFAULT_POSTHOG_HOST = '/ingest'
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useMountEffect(() => {
-    if (!POSTHOG_KEY) return
+    if (!env.VITE_POSTHOG_KEY) return
 
-    posthog.init(POSTHOG_KEY, {
-      api_host: POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
+    posthog.init(env.VITE_POSTHOG_KEY, {
+      api_host: env.VITE_POSTHOG_HOST ?? DEFAULT_POSTHOG_HOST,
       // Opt into PostHog's current default behaviour. Most relevant here:
       // `capture_pageview` becomes 'history_change', so the SDK captures the
       // initial pageview plus every History API navigation on its own, and

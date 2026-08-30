@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 const NBA_GAME_LOG_URL = 'https://stats.nba.com/stats/leaguegamelog'
 const NBA_FETCH_TIMEOUT_MS = 15_000
 const NBA_HEADERS = {
@@ -8,19 +10,19 @@ const NBA_HEADERS = {
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
 }
 
-type ResultSet = {
-  name: string
-  headers: string[]
-  rowSet: unknown[][]
-}
+const leagueGameLogSchema = z.object({
+  resultSets: z.array(
+    z.object({
+      name: z.string(),
+      headers: z.array(z.string()),
+      rowSet: z.array(z.array(z.json())),
+    })
+  ),
+})
 
-type LeagueGameLog = {
-  resultSets: ResultSet[]
-}
+type LeagueGameLog = z.infer<typeof leagueGameLogSchema>
 
-type GameLogEntry = {
-  GAME_ID: string
-}
+const gameIdSchema = z.string()
 
 /**
  * Fetch the unique NBA game IDs played on a given PST date (YYYY-MM-DD) from
@@ -55,8 +57,8 @@ export async function fetchGameIdsForDate(
     throw new Error(`Failed to fetch NBA game log: ${response.status}`)
   }
 
-  const data = (await response.json()) as LeagueGameLog
-  return Array.from(new Set(parseGameLog(data).map((game) => game.GAME_ID)))
+  const data = leagueGameLogSchema.parse(await response.json())
+  return parseGameIds(data)
 }
 
 /**
@@ -71,19 +73,21 @@ export function getNbaSeason(date: string) {
   return `${startYear}-${endYear.toString().padStart(2, '0')}`
 }
 
-function parseGameLog(data: LeagueGameLog) {
+function parseGameIds(data: LeagueGameLog) {
   const resultSet = data.resultSets.find((set) => set.name === 'LeagueGameLog')
   if (!resultSet) {
     throw new Error('LeagueGameLog result set not found')
   }
 
-  return resultSet.rowSet.map((row) => {
-    const entry: Record<string, unknown> = {}
-    for (const [index, header] of resultSet.headers.entries()) {
-      entry[header] = row[index]
-    }
-    return entry as GameLogEntry
-  })
+  const gameIdIndex = resultSet.headers.indexOf('GAME_ID')
+  if (gameIdIndex === -1) {
+    throw new Error('GAME_ID column not found')
+  }
+
+  const gameIds = resultSet.rowSet.map((row) =>
+    gameIdSchema.parse(row[gameIdIndex])
+  )
+  return Array.from(new Set(gameIds))
 }
 
 function formatGameLogDate(date: string) {

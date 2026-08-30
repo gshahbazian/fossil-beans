@@ -6,6 +6,7 @@ import {
   getPSTDateOfLatestGame,
 } from '@/server/db/queries'
 import { PRODUCTION_CACHE_HEADERS } from '@/lib/cache-control'
+import { env } from '@/lib/env'
 
 const loadHomeData = createServerFn().handler(async () => {
   const pstDate = await getPSTDateOfLatestGame()
@@ -33,7 +34,7 @@ function HomePage() {
 }
 
 function getCacheHeaders() {
-  if (!import.meta.env.PROD) {
+  if (!env.PROD) {
     return { 'Cache-Control': 'no-store' }
   }
 
