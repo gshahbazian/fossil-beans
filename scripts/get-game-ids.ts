@@ -10,5 +10,3 @@ const gameIds = await fetchGameIdsForDate(dateArg, {
   baseUrl: process.env.NBA_GAME_LOG_URL,
 })
 process.stdout.write(gameIds.join(','))
-
-export {}

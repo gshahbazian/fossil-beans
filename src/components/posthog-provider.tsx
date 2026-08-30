@@ -17,8 +17,9 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // initial pageview plus every History API navigation on its own, and
       // `capture_pageleave` follows it. Also strips URL hashes from captured
       // URLs and injects PostHog's external scripts into <head> so they do not
-      // disturb SSR hydration.
-      defaults: '2026-06-25',
+      // disturb SSR hydration. Later snapshots prefer the shared cookie over
+      // stale localStorage identity, and capture sanitized JSON-LD in replay.
+      defaults: '2026-08-30',
     })
   })
 
