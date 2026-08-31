@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,9 @@ export default function PlayerDialog({
   playerStat: HomePlayerStat
   game: HomeGame
 }) {
-  const onOpenChange = (open: boolean) => {
+  const [isOpen, setIsOpen] = useState(true)
+
+  const onOpenChangeComplete = (open: boolean) => {
     if (open) return
     onClose()
   }
@@ -40,10 +43,14 @@ export default function PlayerDialog({
   const teamColors = getTeamColors(playerTeam.abbreviation)
 
   return (
-    <Dialog open onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      onOpenChangeComplete={onOpenChangeComplete}
+    >
       <DialogContent
         className={cn(
-          'player-dialog w-[min(28rem,100%-1rem)] rounded-2xl bg-transparent p-0 ring-0',
+          'player-dialog w-[min(28rem,100%-1rem)] rounded-2xl bg-transparent p-0 ring-0 data-open:duration-200',
           '[:has(>&)_[data-slot=dialog-overlay]]:bg-black/70',
           '**:data-[slot=dialog-close]:top-2 **:data-[slot=dialog-close]:right-2 **:data-[slot=dialog-close]:size-6 **:data-[slot=dialog-close]:rounded-md **:data-[slot=dialog-close]:bg-secondary **:data-[slot=dialog-close]:text-secondary-foreground **:data-[slot=dialog-close]:opacity-30 **:data-[slot=dialog-close]:hover:bg-secondary **:data-[slot=dialog-close]:hover:text-secondary-foreground **:data-[slot=dialog-close]:hover:opacity-60 [&_[data-slot=dialog-close]_svg]:size-3'
         )}
