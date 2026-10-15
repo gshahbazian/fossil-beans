@@ -101,6 +101,12 @@ pnpm deploy
 Wrangler. If PostHog is enabled, provide `VITE_POSTHOG_KEY` in `.env` during the
 build; Vite embeds it in the client bundle.
 
+Every deployed Worker version starts with a fresh HTML cache. Browsers must
+revalidate HTML on each visit, so they receive the deployed version's page and
+matching client assets. The first request fills the new version's edge cache;
+no post-deploy purge command or extra deployment secret is needed. This also
+applies to deployments run directly through Wrangler or Cloudflare Builds.
+
 Wrangler prints the deployed Worker URL. Seed games through that Worker so the
 home-page cache is purged after the database update:
 
@@ -145,10 +151,18 @@ native [Workers Cache](https://blog.cloudflare.com/workers-cache/), enabled with
    (no D1 query, no render).
 3. On a miss, the worker runs the TanStack Start handler, which returns the HTML
    with separate browser and edge policies:
-   - `Cache-Control: public, max-age=300` caches in the browser for five minutes.
+   - `Cache-Control: no-cache` permits browser storage but requires revalidation
+     before reuse, including after a deployment.
    - `Cloudflare-CDN-Cache-Control: public, max-age=86400, stale-while-revalidate=604800`
      caches at Cloudflare's edge for one day and permits stale responses for one
      week while revalidation happens in the background.
+
+`cache.cross_version_cache` is explicitly `false`: Cloudflare includes the
+Worker version in its cache key, so stale HTML from a previous deployment is
+never reused by a new version. The edge TTL and stale window apply only within
+that version. See [Cloudflare's cross-version caching documentation](https://developers.cloudflare.com/workers/cache/configuration/#cross-version-caching).
+Hashed static assets keep their one-year immutable cache policy in
+`public/_headers`.
 
 The PostHog proxy, operational API responses, framework errors, and framework
 responses without an intentional cache policy send `no-store` policies for both
