@@ -1,11 +1,11 @@
 /**
  * Revalidate HTML in the browser on every visit so deployments cannot leave it
- * pointing at old client assets. Cloudflare caches it for one day within the
- * deployed Worker version and may serve stale responses for one week while
- * revalidating them in the background.
+ * pointing at old client assets. Bound edge freshness to one minute even if an
+ * insert's cache purge fails. Require foreground revalidation after expiry;
+ * never hide refresh errors behind stale scores.
  */
 export const PRODUCTION_CACHE_HEADERS = {
   'Cache-Control': 'no-cache',
   'Cloudflare-CDN-Cache-Control':
-    'public, max-age=86400, stale-while-revalidate=604800',
+    'public, max-age=60, must-revalidate, stale-if-error=0',
 }

@@ -153,13 +153,14 @@ native [Workers Cache](https://blog.cloudflare.com/workers-cache/), enabled with
    with separate browser and edge policies:
    - `Cache-Control: no-cache` permits browser storage but requires revalidation
      before reuse, including after a deployment.
-   - `Cloudflare-CDN-Cache-Control: public, max-age=86400, stale-while-revalidate=604800`
-     caches at Cloudflare's edge for one day and permits stale responses for one
-     week while revalidation happens in the background.
+   - `Cloudflare-CDN-Cache-Control: public, max-age=60, must-revalidate, stale-if-error=0`
+     caches at Cloudflare's edge for at most one minute before foreground
+     revalidation. It does not serve stale HTML during refreshes or errors.
+     A failed purge therefore cannot keep an old score cached for days.
 
 `cache.cross_version_cache` is explicitly `false`: Cloudflare includes the
 Worker version in its cache key, so stale HTML from a previous deployment is
-never reused by a new version. The edge TTL and stale window apply only within
+never reused by a new version. The edge TTL applies only within
 that version. See [Cloudflare's cross-version caching documentation](https://developers.cloudflare.com/workers/cache/configuration/#cross-version-caching).
 Hashed static assets keep their one-year immutable cache policy in
 `public/_headers`.
@@ -180,6 +181,10 @@ Purging uses the Workers Cache API — `cache.purge({ purgeEverything: true })`
 via `cloudflare:workers`. Because the home page is the only cacheable response,
 this invalidates it. The purge is global and needs no origin, so the cron, the
 manual endpoint, and local dev all purge the same way.
+
+Purges provide immediate freshness when successful; the one-minute edge TTL is
+the fallback if a purge fails. This bounds caching after database updates, not
+the age of upstream scores: the scheduled import still runs every 30 minutes.
 
 - Local dev: `PURGE_URL` and `PURGE_SECRET` default to
   `http://localhost:3000` and `local-dev-purge-secret` (the value in
