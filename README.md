@@ -177,10 +177,21 @@ The `seed:games` script (`scripts/insert-games.sh`) calls
 purges the edge cache so the next request re-renders. The endpoint is
 auth-gated by the `PURGE_SECRET` secret.
 
-Purging uses the Workers Cache API — `cache.purge({ purgeEverything: true })`
-via `cloudflare:workers`. Because the home page is the only cacheable response,
+Purging uses the default handler’s execution context:
+`ctx.cache.purge({ purgeEverything: true })`. Cloudflare scopes this to the
+calling Worker entrypoint; both the home-page fetch and cron use the default
+entrypoint. Because the home page is the only cacheable response,
 this invalidates it. The purge is global and needs no origin, so the cron, the
-manual endpoint, and local dev all purge the same way.
+manual endpoint, and local dev all target the same cache.
+
+A job succeeds only after the purge is accepted. Rejected purges and transport
+errors are retried three times with short backoff, with each failure logged.
+Exhausted retries fail the cron and return an error from manual requests. The
+data write is already committed at that point; the error explicitly says so,
+and rerunning the idempotent import or authenticated purge can retry invalidation.
+A purge acceptance confirms Cloudflare accepted the request, not a subsequent
+cache read at every location; inspect production responses and logs to confirm
+propagation.
 
 Purges provide immediate freshness when successful; the one-minute edge TTL is
 the fallback if a purge fails. This bounds caching after database updates, not
@@ -190,7 +201,8 @@ the age of upstream scores: the scheduled import still runs every 30 minutes.
   `http://localhost:3000` and `local-dev-purge-secret` (the value in
   `.dev.vars.example`). Copy it to `.dev.vars` and run `pnpm dev` before
   `pnpm seed:games:local`. (The local miniflare runtime may not implement
-  `cache.purge`; the purge is best-effort and never fails the insert.)
+  `ctx.cache.purge`; imports then write data but return an invalidation error
+  rather than claiming success.)
 - Production: set the secret with `wrangler secret put PURGE_SECRET` (it is not
   declared in `wrangler.jsonc`, so it is never overwritten on deploy), then run
   the seed script with `PURGE_URL=https://your-host PURGE_SECRET=...`.

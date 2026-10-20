@@ -46,3 +46,6 @@ jobs:
       # cf-typegen + tsc --noEmit + oxlint (including type-aware rules).
       - name: Types and lint
         run: pnpm check
+
+      - name: Cache invalidation tests
+        run: pnpm exec tsx --test tests/cache-purge.test.ts

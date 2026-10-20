@@ -2,8 +2,8 @@ import {
   createStartHandler,
   defaultStreamHandler,
 } from '@tanstack/react-start/server'
-import { cache } from 'cloudflare:workers'
 import { insertGames } from './server/jobs/insert-games'
+import { purgeSiteCache, updateAndPurge } from './server/cache-purge'
 
 const startHandler = createStartHandler(defaultStreamHandler)
 
@@ -16,7 +16,11 @@ const POSTHOG_INGEST_ORIGIN = 'https://us.i.posthog.com'
 // responses without running the Worker. Every response must therefore either
 // provide an intentional cache policy or explicitly opt out of caching.
 export default {
-  async fetch(request: Request, workerEnv: Cloudflare.Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    workerEnv: Cloudflare.Env,
+    ctx: ExecutionContext
+  ): Promise<Response> {
     const url = new URL(request.url)
 
     if (isPostHogIngestPath(url.pathname)) {
@@ -25,12 +29,17 @@ export default {
     }
 
     if (url.pathname === '/api/purge-cache' && request.method === 'POST') {
-      const response = await handlePurge(request, workerEnv)
+      const response = await handlePurge(request, workerEnv, ctx.cache)
       return preventCaching(response)
     }
 
     if (url.pathname === INSERT_GAMES_PATH && request.method === 'POST') {
-      const response = await handleInsertGames(request, url, workerEnv)
+      const response = await handleInsertGames(
+        request,
+        url,
+        workerEnv,
+        ctx.cache
+      )
       return preventCaching(response)
     }
 
@@ -38,8 +47,12 @@ export default {
     return applyFrameworkCachePolicy(response)
   },
 
-  async scheduled(controller: ScheduledController, workerEnv: Cloudflare.Env) {
-    await handleScheduled(controller, workerEnv)
+  async scheduled(
+    controller: ScheduledController,
+    workerEnv: Cloudflare.Env,
+    ctx: ExecutionContext
+  ) {
+    await handleScheduled(controller, workerEnv, ctx.cache)
   },
 } satisfies ExportedHandler<Cloudflare.Env>
 
@@ -94,22 +107,31 @@ function preventCaching(response: Response) {
 
 async function handlePurge(
   request: Request,
-  workerEnv: Cloudflare.Env
+  workerEnv: Cloudflare.Env,
+  cache: CacheContext | undefined
 ): Promise<Response> {
   const unauthorized = getUnauthorizedResponse(request, workerEnv)
   if (unauthorized) {
     return unauthorized
   }
 
-  const purged = await purgeSiteCache()
-
-  return Response.json({ ok: true, purged })
+  try {
+    const purged = await purgeSiteCache(cache)
+    return Response.json({ ok: true, purged })
+  } catch (error) {
+    console.error('Manual cache purge failed', error)
+    return Response.json(
+      { ok: false, purged: false, error: getErrorMessage(error) },
+      { status: 503 }
+    )
+  }
 }
 
 async function handleInsertGames(
   request: Request,
   requestUrl: URL,
-  workerEnv: Cloudflare.Env
+  workerEnv: Cloudflare.Env,
+  cache: CacheContext | undefined
 ) {
   const unauthorized = getUnauthorizedResponse(request, workerEnv)
   if (unauthorized) {
@@ -120,10 +142,12 @@ async function handleInsertGames(
   const gameIds = getGameIds(requestUrl)
 
   try {
-    const result = await insertGames(workerEnv, { date, gameIds })
-    const purged = await purgeSiteCache()
+    const result = await updateAndPurge(
+      () => insertGames(workerEnv, { date, gameIds }),
+      cache
+    )
 
-    return Response.json({ ok: true, ...result, purged })
+    return Response.json({ ok: true, ...result })
   } catch (error) {
     console.error('Manual NBA game insert failed', error)
 
@@ -154,7 +178,8 @@ function getUnauthorizedResponse(request: Request, workerEnv: Cloudflare.Env) {
 
 async function handleScheduled(
   controller: ScheduledController,
-  workerEnv: Cloudflare.Env
+  workerEnv: Cloudflare.Env,
+  cache: CacheContext | undefined
 ) {
   try {
     console.log('Scheduled NBA game insert started', {
@@ -162,33 +187,11 @@ async function handleScheduled(
       scheduledTime: getScheduledTime(controller),
     })
 
-    const result = await insertGames(workerEnv)
-    const purged = await purgeSiteCache()
-    console.log('Scheduled NBA game insert completed', { ...result, purged })
+    const result = await updateAndPurge(() => insertGames(workerEnv), cache)
+    console.log('Scheduled NBA game insert completed', result)
   } catch (error) {
     console.error('Scheduled NBA game insert failed', error)
     throw error
-  }
-}
-
-/**
- * Invalidate this Worker's edge cache. The only response we mark cacheable is
- * the home page, so purging everything the Worker cached invalidates it. The
- * purge is global and needs no origin, so it works identically from the request
- * handlers and the cron.
- */
-async function purgeSiteCache() {
-  try {
-    const result = await cache.purge({ purgeEverything: true })
-    if (!result.success) {
-      console.error('Cache purge reported errors', result.errors)
-    }
-    return result.success
-  } catch (error) {
-    // Local dev (miniflare) may not implement the purge API; never let a purge
-    // failure break the insert that triggered it.
-    console.warn('Cache purge skipped', error)
-    return false
   }
 }
 
