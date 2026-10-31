@@ -153,8 +153,8 @@ native [Workers Cache](https://blog.cloudflare.com/workers-cache/), enabled with
    with separate browser and edge policies:
    - `Cache-Control: no-cache` permits browser storage but requires revalidation
      before reuse, including after a deployment.
-   - `Cloudflare-CDN-Cache-Control: public, max-age=60, must-revalidate, stale-if-error=0`
-     caches at Cloudflare's edge for at most one minute before foreground
+   - `Cloudflare-CDN-Cache-Control: public, max-age=1800, must-revalidate, stale-if-error=0`
+     caches at Cloudflare's edge for at most 30 minutes before foreground
      revalidation. It does not serve stale HTML during refreshes or errors.
      A failed purge therefore cannot keep an old score cached for days.
 
@@ -193,7 +193,7 @@ A purge acceptance confirms Cloudflare accepted the request, not a subsequent
 cache read at every location; inspect production responses and logs to confirm
 propagation.
 
-Purges provide immediate freshness when successful; the one-minute edge TTL is
+Purges provide immediate freshness when successful; the 30-minute edge TTL is
 the fallback if a purge fails. This bounds caching after database updates, not
 the age of upstream scores: the scheduled import still runs every 30 minutes.
 
