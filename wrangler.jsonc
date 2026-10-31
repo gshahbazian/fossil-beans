@@ -5,7 +5,17 @@
   // the compatibility date itself, so no `compatibility_flags` entry is needed.
   "compatibility_date": "2026-08-04",
   "main": "./src/server-entry.ts",
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "persist": true,
+    },
+    "traces": {
+      "enabled": false,
+    },
+  },
   // Native Workers Cache: sits in front of this Worker and caches responses per
   // their `Cloudflare-CDN-Cache-Control` header, serving hits without running
   // the Worker. Each deployment gets its own cache; the first request fills it
