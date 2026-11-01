@@ -4,6 +4,7 @@ import {
 } from '@tanstack/react-start/server'
 import { insertGames } from './server/jobs/insert-games'
 import { purgeSiteCache, updateAndPurge } from './server/cache-purge'
+import { getUnknownRouteResponse } from './server/request-routing'
 
 const startHandler = createStartHandler(defaultStreamHandler)
 
@@ -42,6 +43,9 @@ export default {
       )
       return preventCaching(response)
     }
+
+    const notFound = getUnknownRouteResponse(url.pathname)
+    if (notFound) return notFound
 
     const response = await startHandler(request)
     return applyFrameworkCachePolicy(response)
