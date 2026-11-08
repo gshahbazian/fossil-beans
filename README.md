@@ -195,7 +195,8 @@ propagation.
 
 Purges provide immediate freshness when successful; the 30-minute edge TTL is
 the fallback if a purge fails. This bounds caching after database updates, not
-the age of upstream scores: the scheduled import still runs every 30 minutes.
+the age of upstream scores: the scheduled import runs every 10 minutes from
+3:00pm through 1:30am PST.
 
 - Local dev: `PURGE_URL` and `PURGE_SECRET` default to
   `http://localhost:3000` and `local-dev-purge-secret` (the value in
